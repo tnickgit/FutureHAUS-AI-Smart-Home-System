@@ -14,6 +14,7 @@
 #include "esp_wifi.h"
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
+#include "waterSense.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
@@ -44,7 +45,7 @@ static esp_err_t TRY(const char *what, esp_err_t err) {
 /************* RX/TX tasks *************/
 // NEW: Root RX task — prints any packets it receives
 static void mesh_rx_task(void *arg) {
-    uint8_t buf[150];
+    uint8_t buf[1024];
     mesh_addr_t from;
     mesh_data_t data = {
         .data  = buf,
@@ -62,12 +63,19 @@ static void mesh_rx_task(void *arg) {
 }
 
 static void mesh_tx_task(void *arg) {
+
+    waterSense sensor = waterSense_construct();
+
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
+        determineWaterLevel(&sensor);
+        determineData(&sensor);
+        combineData(&sensor);
         if (s_mesh_started && s_has_parent && !s_is_root) {
-            char msg[64];
+            char msg[500];
             snprintf(msg, sizeof(msg), "hi from Kitchen, MAC:" MACSTR, MAC2STR(mac));
+            snprintf(msg, sizeof(msg), sensor.determination);
 
             mesh_data_t data = {
                 .data  = (uint8_t*)msg,
