@@ -1,0 +1,21 @@
+#include "temperatureSense.h"
+
+temperatureSense temperatureSense_construct(void)
+{
+    temperatureSense ts;          // local variable
+    ts.sensedTemperature = 0.0f;
+    strcpy(ts.determination, "");
+    return ts;                    // returned by value to caller
+}
+
+void determineTemperatureLevel(temperatureSense *ts)
+{
+    // temperature in fahrenheit with 1 decimal place
+    ts->sensedTemperature = 23.0f + ((float)(rand() % 620)) / 10.0f;
+}
+
+void determineData(temperatureSense *ts)
+{
+    // print message
+    sprintf(ts->determination, "The temperature is %.1f°F", ts->sensedTemperature);
+}

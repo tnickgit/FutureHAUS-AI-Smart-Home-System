@@ -15,6 +15,7 @@
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
 #include "waterSense.h"
+#include "temperatureSense.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
@@ -65,17 +66,29 @@ static void mesh_rx_task(void *arg) {
 static void mesh_tx_task(void *arg) {
 
     waterSense sensor = waterSense_construct();
+    temperatureSense temp_sensor = temperatureSense_construct();
 
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
+        // water
         determineWaterLevel(&sensor);
         determineData(&sensor);
         combineData(&sensor);
+
+        // temperature
+        determineTemperatureLevel(&temp_sensor);
+        determineData(&temp_sensor);
+
         if (s_mesh_started && s_has_parent && !s_is_root) {
             char msg[500];
             snprintf(msg, sizeof(msg), "hi from Kitchen, MAC:" MACSTR, MAC2STR(mac));
+
+            // water
             snprintf(msg, sizeof(msg), sensor.determination);
+
+            // temperature
+            snprintf(msg, sizeof(msg), temp_sensor.determination);
 
             mesh_data_t data = {
                 .data  = (uint8_t*)msg,
