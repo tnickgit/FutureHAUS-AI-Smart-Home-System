@@ -12,15 +12,15 @@ void determineWaterLevel(waterSense *ws)
     ws->sensedNumber = 100 + rand() % 400; 
 }
 
-void determineData(waterSense *ws)
+void determineWaterData(waterSense *ws)
 {
     if (ws->sensedNumber < 300)
     {
-        strcpy(ws->determination, "Your water level usage is perfect." );
+        strcpy(ws->determination, "Your water level usage is perfect. ");
     }
     else if ((ws->sensedNumber >= 300) && (ws->sensedNumber <= 350))
     {
-        strcpy(ws->determination, "Your water level usage is normal." );
+        strcpy(ws->determination, "Your water level usage is normal. ");
     }
     else if (ws->sensedNumber > 350)
     {

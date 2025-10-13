@@ -21,7 +21,7 @@ waterSense waterSense_construct(void);
 
 void determineWaterLevel(waterSense *ws); // this is where a number is going to be randomly generated
 
-void determineData(waterSense *ws); // this is going to put the random number generated into the string
+void determineWaterData(waterSense *ws); // this is going to put the random number generated into the string
 
 void combineData(waterSense *ws);
 

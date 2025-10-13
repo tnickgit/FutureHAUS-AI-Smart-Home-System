@@ -73,7 +73,7 @@ static void mesh_tx_task(void *arg) {
     for (;;) {
         // water
         determineWaterLevel(&sensor);
-        determineData(&sensor);
+        determineWaterData(&sensor);
         combineData(&sensor);
 
         // temperature
