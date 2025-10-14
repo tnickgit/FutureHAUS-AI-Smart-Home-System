@@ -83,12 +83,16 @@ static void mesh_tx_task(void *arg) {
         if (s_mesh_started && s_has_parent && !s_is_root) {
             char msg[500];
             snprintf(msg, sizeof(msg), "hi from Kitchen, MAC:" MACSTR, MAC2STR(mac));
-
-            // water
+            // when flashing to each board make sure to either comment out the water, temp, electricity, or lighting 
+            // snprintf
+            //water
             snprintf(msg, sizeof(msg), sensor.determination);
 
             // temperature
             snprintf(msg, sizeof(msg), temp_sensor.determination);
+
+            // lighting
+            // energy
 
             mesh_data_t data = {
                 .data  = (uint8_t*)msg,

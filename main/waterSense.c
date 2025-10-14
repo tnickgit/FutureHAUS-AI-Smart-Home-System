@@ -29,8 +29,8 @@ void determineWaterData(waterSense *ws)
 }
 
 void combineData(waterSense *ws){
-    char str[20];  // buffer for number as string
-    sprintf(str, "%d", ws->sensedNumber);  // convert int -> string
+    char str[64];  // bigger buffer just in case
+    sprintf(str, "usage: %d gal/day", ws->sensedNumber);
 
     // this line just puts the entire message into determination array
     strncat(ws->determination, str, sizeof(ws->determination) - strlen(ws->determination) - 1);
