@@ -85,7 +85,7 @@ static void mesh_tx_task(void *arg) {
             snprintf(msg, sizeof(msg), "hi from Kitchen, MAC:" MACSTR, MAC2STR(mac));
             // when flashing to each board make sure to either comment out the water, temp, electricity, or lighting 
             // snprintf
-            //water
+            // water
             snprintf(msg, sizeof(msg), sensor.determination);
 
             // temperature
