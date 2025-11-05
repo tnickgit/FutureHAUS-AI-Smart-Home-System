@@ -12,6 +12,7 @@
 // Define the struct with leading underscore
 struct _waterSense {
     int sensedNumber;          // random number generated
+    int totalNumber;
     char determination[limit];   // message string
 };
 
