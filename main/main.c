@@ -21,6 +21,7 @@
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
 #define ROUTER_PASS  "test12345"
 #define MESH_AP_PASS "mesh-pass"       // 8..63 chars; used by parents for child joins
+#define BUFFERSIZE   1024
 /******************************************************/
 
 static const char *TAG = "MESH_MIN";
