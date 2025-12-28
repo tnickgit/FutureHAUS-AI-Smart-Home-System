@@ -15,18 +15,25 @@
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
 #include "sensorNode.h"
+#include "cJSON.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
 #define ROUTER_PASS  "test12345"
 #define MESH_AP_PASS "mesh-pass"       // 8..63 chars; used by parents for child joins
 #define BUFFER_SIZE   1024
+#define RX_SIZE       1024
+
+#define MAX_NODES     20
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_WATER   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_TEMP   //change to whatever needed
 /******************************************************/    
 static sensorNode sensor_node; // global sensor node
+
+
+static uint8_t rx_buf[RX_SIZE];
 
 //for device ID
 static char macStr[18];
@@ -41,8 +48,20 @@ static bool s_mesh_started = false;
 static bool s_has_parent = false;
 static int  s_layer = -1;  // track ourselves since some IDF structs don't give old_layer
 
+typedef struct {
+    char id[MAC_STR_SIZE];
+    mesh_addr_t mac_addr; // Store binary MAC for routing
+    bool active;
+} NodeEntry;
+
+static NodeEntry node_table[MAX_NODES];
+static int node_count = 0;
+
 // NEW: ensure we only spawn one RX task when we become root
 static bool s_rx_task_running = false;
+
+//prototype for helper
+void process_root_rx(mesh_addr_t *from, uint8_t *payload);
 
 //returns esp error or ESP_OK if the function is working
 static esp_err_t TRY(const char *what, esp_err_t err) {
@@ -51,31 +70,147 @@ static esp_err_t TRY(const char *what, esp_err_t err) {
     return err;
 }
 
-/************* RX/TX tasks *************/
-// NEW: Root RX task — prints any packets it receives
-static void mesh_rx_task(void *arg) {
-    uint8_t buf[1024];
-    mesh_addr_t from;
-    mesh_data_t data = {
-        .data  = buf,
-        .size  = sizeof(buf),
-        .proto = MESH_PROTO_BIN,
-        .tos   = MESH_TOS_P2P
-    };
-    for (;;) {
-        data.size = sizeof(buf);
-        if (esp_mesh_recv(&from, &data, portMAX_DELAY, NULL, NULL, 0) == ESP_OK) {
-            ESP_LOGI(TAG, "root got %uB from " MACSTR ": %s",
-                     data.size, MAC2STR(from.addr), (char*)data.data);
+// for ROOT to have a node table, will be on WSS eventually
+void update_node_table(char* id_str, mesh_addr_t *raw_mac) {
+    // 1. Check if exists
+    for (int i = 0; i < node_count; i++) {
+        if (strncmp(node_table[i].id, id_str, MAC_STR_SIZE) == 0) {
+            // Already known, update timestamp if you want
+            return; 
+        }
+    }
+    
+    if (node_count < MAX_NODES) {
+        strncpy(node_table[node_count].id, id_str, MAC_STR_SIZE);
+        node_table[node_count].mac_addr = *raw_mac;
+        node_table[node_count].active = true;
+        node_count++;
+        ESP_LOGI(TAG, "New Node Discovered! ID: %s (Total: %d)", id_str, node_count);
+    }
+}
+
+
+//mimic commands/polling from central server
+static void root_polling_task(void *arg) {
+    while(1) {
+        vTaskDelay(pdMS_TO_TICKS(10000)); // Poll every 10 seconds
+        
+        if (s_is_root && node_count > 0) {
+            ESP_LOGI(TAG, "--- Polling %d Nodes ---", node_count);
+            
+            for (int i = 0; i < node_count; i++) {
+                // Construct a command packet
+                char command[] = "{\"cmd\": \"POLL_DATA\"}";
+                
+                mesh_data_t data = {
+                    .data = (uint8_t*)command,
+                    .size = strlen(command) + 1,
+                    .proto = MESH_PROTO_BIN,
+                    .tos = MESH_TOS_P2P
+                };
+
+                // Send to specific node using stored binary MAC
+                // ROOT MUST USE P2P FLAG 
+                esp_err_t err = esp_mesh_send(&node_table[i].mac_addr, &data, MESH_DATA_P2P, NULL, 0);
+                
+                if (err == ESP_OK) {
+                    ESP_LOGI(TAG, "Sent POLL to %s", node_table[i].id);
+                } else {
+                    ESP_LOGW(TAG, "Failed to poll %s", node_table[i].id);
+                }
+            }
         }
     }
 }
 
+/************* RX/TX tasks *************/
+//Root RX task — prints any packets it receives
+void mesh_rx_task(void *arg) {
+    esp_err_t err;
+    mesh_addr_t from;
+    mesh_data_t data;
+    int flag = 0;
+    
+    data.data = rx_buf; 
+    data.size = RX_SIZE;
+
+    while (1) {
+        data.size = RX_SIZE;
+        // Wait for data...
+        err = esp_mesh_recv(&from, &data, portMAX_DELAY, &flag, NULL, 0);
+
+        if (err == ESP_OK && data.size > 0) {
+            // Null-terminate to ensure string functions work safely
+            rx_buf[data.size] = '\0'; 
+
+            if (esp_mesh_is_root()) {
+                // *** CALL THE HELPER FUNCTION ***
+                process_root_rx(&from, data.data);
+            } 
+            else {
+                // child logic
+                if(strstr((char*)data.data, "POLL_DATA")) {
+                    ESP_LOGI("CHILD_LOGIC", "Received POLL_DATA command from Root");
+                    sensor_node.polled = true;
+                } 
+                 else
+                if (strstr((char*)data.data, "FAN_ON")) {
+                    ESP_LOGI("CHILD_LOGIC", "Turning FAN ON");
+                } 
+                else if (strstr((char*)data.data, "FAN_OFF")) {
+                    ESP_LOGI("CHILD_LOGIC", "Turning FAN OFF");
+                }
+            }
+        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+    vTaskDelete(NULL);
+}
+
+void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
+    ESP_LOGI("ROOT_LOGIC", "Processing data from Child: %s", payload);
+
+    cJSON *root = cJSON_Parse((char *)payload);
+    if (root) {
+        cJSON *data_item = cJSON_GetObjectItem(root, "data");
+        
+        // 1. EXTRACT ID AND UPDATE TABLE
+        cJSON *id_item = cJSON_GetObjectItem(root, "id");
+        if (cJSON_IsString(id_item) && (id_item->valuestring != NULL)) {
+            // Update the table with the ID string and the binary MAC from the header
+            update_node_table(id_item->valuestring, from);
+        }
+
+        if (cJSON_IsString(data_item)) {
+            float temp = atof(data_item->valuestring);
+            const char *cmd;
+
+            // Logic: Decide on Feedback
+            if (temp > 30.0) {
+                cmd = "{\"cmd\": \"FAN_ON\"}"; // Updated to be proper JSON if you like
+                ESP_LOGW("ROOT_LOGIC", "High Temp (%.1f). Sending FAN_ON.", temp);
+            } else {
+                cmd = "{\"cmd\": \"FAN_OFF\"}";
+                ESP_LOGI("ROOT_LOGIC", "Temp OK (%.1f). Sending FAN_OFF.", temp);
+            }
+
+            // Send Feedback
+            mesh_data_t feedback_data;
+            feedback_data.data = (uint8_t *)cmd;
+            feedback_data.size = strlen(cmd) + 1;
+            feedback_data.proto = MESH_PROTO_BIN;
+            feedback_data.tos = MESH_TOS_P2P;
+
+            esp_mesh_send(from, &feedback_data, MESH_DATA_P2P, NULL, 0);
+        }
+        cJSON_Delete(root);
+    } else {
+        ESP_LOGE("ROOT_LOGIC", "Failed to parse JSON");
+    }
+}
+
 static void mesh_tx_task(void *arg) {
-
-
     //fix id logic later
-
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
@@ -89,13 +224,17 @@ static void mesh_tx_task(void *arg) {
                 .proto = MESH_PROTO_BIN,
                 .tos   = MESH_TOS_P2P
             };
-            esp_err_t err = esp_mesh_send(NULL, &data, 0, NULL, 0);
-            if (err != ESP_OK) {
-                ESP_LOGW(TAG, "send failed: %s (0x%x)", esp_err_to_name(err), err);
+            if(sensor_node.polled){
+                sensor_node.polled = false; // reset poll flag
+                esp_err_t err = esp_mesh_send(NULL, &data, 0, NULL, 0);
+                if (err != ESP_OK) {
+                    ESP_LOGW(TAG, "send failed: %s (0x%x)", esp_err_to_name(err), err);
+                }
+                else {
+                    ESP_LOGI(TAG, "sent: %s", sensor_node.jsonPayload);
+                }
             }
-            else {
-                ESP_LOGI(TAG, "sent: %s", sensor_node.jsonPayload);
-            }
+
         }
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
@@ -127,8 +266,8 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         s_layer = esp_mesh_get_layer();
         ESP_LOGI(TAG, "parent connected, layer=%d, root=%d", s_layer, s_is_root);
 
-        // NEW: if we are root, start RX task once
-        if (s_is_root && !s_rx_task_running) {
+        //start RX task once
+        if (!s_rx_task_running) {
             if (xTaskCreate(mesh_rx_task, "mesh_rx", 4096, NULL, 5, NULL) == pdPASS) {
                 s_rx_task_running = true;
                 ESP_LOGI(TAG, "mesh_rx task started");
@@ -227,4 +366,5 @@ void app_main(void) {
     wifi_mesh_init();
     sensor_node = sensorNode_construct(NODE_TYPE, macStr, esp_mesh_is_root());
     xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 5, NULL);
+    xTaskCreate(root_polling_task, "root_poll", 4096, NULL, 5, NULL);
 }

@@ -24,6 +24,7 @@ struct _sensorNode{
 
     //data properties
     float data;
+    bool polled;
     char jsonPayload[PAYLOAD_SIZE]; // The final message ready for shipping
 
     //handling specific sensor types

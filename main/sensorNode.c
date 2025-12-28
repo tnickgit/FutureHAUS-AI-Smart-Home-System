@@ -55,7 +55,7 @@ void sensorNode_package_data(sensorNode *sn) {
     
     // NOTE: We use snprintf to prevent buffer overflows (crashing)
     snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
-             "{\"id\": %s, \"type\": %d, \"data\": \"%f\", \"isRoot\": %s}", 
+             "{\"id\": \"%s\", \"type\": %d, \"data\": \"%f\", \"isRoot\": %s}", 
              sn->nodeID, 
              sn->type, 
              sn->data,
