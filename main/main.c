@@ -23,22 +23,24 @@
 #define MESH_AP_PASS "mesh-pass"       // 8..63 chars; used by parents for child joins
 #define BUFFER_SIZE   1024
 #define RX_SIZE       1024
-
 #define MAX_NODES     20
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
 #define NODE_TYPE   SENSOR_TYPE_TEMP   //change to whatever needed
-/******************************************************/    
+/******************************************************/  
+
+//node data
+static char macStr[18]; //for device ID
 static sensorNode sensor_node; // global sensor node
 
 
-static uint8_t rx_buf[RX_SIZE];
+static uint8_t rx_buf[RX_SIZE]; // rx buffer used to transmit data
 
-//for device ID
-static char macStr[18];
 
+//mesh tag
 static const char *TAG = "MESH_MIN";
+
 //arbitrary, just need one to function as a mesh, each node must have this okay
 static const uint8_t MESH_ID[6] = {0x11,0x22,0x33,0x44,0x55,0x66};
 
@@ -48,20 +50,24 @@ static bool s_mesh_started = false;
 static bool s_has_parent = false;
 static int  s_layer = -1;  // track ourselves since some IDF structs don't give old_layer
 
+
+//used for node table at root ( will be changed to WSS eventually )
 typedef struct {
     char id[MAC_STR_SIZE];
     mesh_addr_t mac_addr; // Store binary MAC for routing
     bool active;
 } NodeEntry;
 
+//node table globals
 static NodeEntry node_table[MAX_NODES];
 static int node_count = 0;
 
-// NEW: ensure we only spawn one RX task when we become root
+// rx running flag
 static bool s_rx_task_running = false;
 
-//prototype for helper
+//prototype for helper function
 void process_root_rx(mesh_addr_t *from, uint8_t *payload);
+
 
 //returns esp error or ESP_OK if the function is working
 static esp_err_t TRY(const char *what, esp_err_t err) {
@@ -89,14 +95,18 @@ void update_node_table(char* id_str, mesh_addr_t *raw_mac) {
     }
 }
 
-
 //mimic commands/polling from central server
 static void root_polling_task(void *arg) {
     while(1) {
         vTaskDelay(pdMS_TO_TICKS(10000)); // Poll every 10 seconds
         
         if (s_is_root && node_count > 0) {
-            ESP_LOGI(TAG, "--- Polling %d Nodes ---", node_count);
+            int is_root_sensor = 0;
+            if(sensor_node.type >= 0 && sensor_node.type <= 3){
+                sensor_node.polled = true; // set own polled flag to true to send data
+                is_root_sensor = 1;
+            }
+            ESP_LOGI(TAG, "--- Polling %d Nodes ---", node_count+is_root_sensor);
             
             for (int i = 0; i < node_count; i++) {
                 // Construct a command packet
@@ -119,6 +129,7 @@ static void root_polling_task(void *arg) {
                     ESP_LOGW(TAG, "Failed to poll %s", node_table[i].id);
                 }
             }
+            
         }
     }
 }
@@ -174,7 +185,7 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     if (root) {
         cJSON *data_item = cJSON_GetObjectItem(root, "data");
         
-        // 1. EXTRACT ID AND UPDATE TABLE
+        // EXTRACT ID AND UPDATE TABLE
         cJSON *id_item = cJSON_GetObjectItem(root, "id");
         if (cJSON_IsString(id_item) && (id_item->valuestring != NULL)) {
             // Update the table with the ID string and the binary MAC from the header
@@ -186,7 +197,7 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
             const char *cmd;
 
             // Logic: Decide on Feedback
-            if (temp > 30.0) {
+            if (temp > 75.0) {
                 cmd = "{\"cmd\": \"FAN_ON\"}"; // Updated to be proper JSON if you like
                 ESP_LOGW("ROOT_LOGIC", "High Temp (%.1f). Sending FAN_ON.", temp);
             } else {
@@ -215,8 +226,6 @@ static void mesh_tx_task(void *arg) {
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
         if (s_mesh_started && s_has_parent && !s_is_root) {
-            sensorNode_get_data(&sensor_node);
-            sensorNode_package_data(&sensor_node);
 
             mesh_data_t data = {
                 .data  = (uint8_t*)sensor_node.jsonPayload,
@@ -226,6 +235,8 @@ static void mesh_tx_task(void *arg) {
             };
             if(sensor_node.polled){
                 sensor_node.polled = false; // reset poll flag
+                sensorNode_get_data(&sensor_node);
+                sensorNode_package_data(&sensor_node);
                 esp_err_t err = esp_mesh_send(NULL, &data, 0, NULL, 0);
                 if (err != ESP_OK) {
                     ESP_LOGW(TAG, "send failed: %s (0x%x)", esp_err_to_name(err), err);
@@ -234,8 +245,22 @@ static void mesh_tx_task(void *arg) {
                     ESP_LOGI(TAG, "sent: %s", sensor_node.jsonPayload);
                 }
             }
-
+        
         }
+        else if(s_is_root && s_mesh_started){
+            if(sensor_node.polled){
+                sensor_node.polled = false; // reset poll flag
+                sensorNode_get_data(&sensor_node); // read Sensor
+                sensorNode_package_data(&sensor_node); //package data
+
+                ESP_LOGI(TAG, "ROOT SENSOR: %s", sensor_node.jsonPayload);
+            }
+
+            //ADD LOGIC TO SEND TO SERVER HERE, POSSIBLY ALSO JUST ADD TO RX TASK WHEN RECIEVING
+            //SO THAT IT JUST FORWARDS, WILL NEED TO HANDLE DATA TRANSMISSION FROM ROOT SENSOR THOUGH
+            
+    }
+    
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }
@@ -263,6 +288,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
     case MESH_EVENT_PARENT_CONNECTED:
         s_has_parent = true;
         s_is_root = esp_mesh_is_root();
+        sensor_node.isRoot = s_is_root; // update sensor node's isRoot status
         s_layer = esp_mesh_get_layer();
         ESP_LOGI(TAG, "parent connected, layer=%d, root=%d", s_layer, s_is_root);
 

@@ -2,14 +2,13 @@
 
 // Constructor
 sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot) {
-    sensorNode sn; // Initialize from template
+    sensorNode sn; // initialize from template
     sn.type = type;
     strncpy(sn.nodeID, nodeID, MAC_STR_SIZE);
     sn.isRoot = isRoot;
     sn.data = 0;
-    // Initialize payload with empty JSON just to be safe
+    // payload is empty at start
     snprintf(sn.jsonPayload, PAYLOAD_SIZE, "{}");
-
     return sn;
 }
 
@@ -45,7 +44,6 @@ void sensorNode_get_data(sensorNode *sn) {
                 break;
         }
     }
-
 }
 
 // The "Wrapper" logic
@@ -62,7 +60,3 @@ void sensorNode_package_data(sensorNode *sn) {
              sn->isRoot ? "true" : "false");
 }
 
-// Simple helper to get the pointer
-char* getSensorNodeMessage(sensorNode *sn) {
-    return sn->jsonPayload;
-}

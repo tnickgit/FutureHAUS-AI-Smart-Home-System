@@ -43,7 +43,5 @@ void sensorNode_get_data(sensorNode *sn);
 // Packager: Takes raw data string (e.g., "75.4 F") and wraps it in JSON
 void sensorNode_package_data(sensorNode *sn);
 
-// Accessor: Returns the final buffer pointer (for esp_mesh_send)
-char* getSensorNodeMessage(sensorNode *sn);
 
 #endif
