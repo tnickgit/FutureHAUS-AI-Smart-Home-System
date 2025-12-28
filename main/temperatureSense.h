@@ -23,7 +23,5 @@ temperatureSense temperatureSense_construct(void);
 // Generate random temperature between 23°F and 85°F
 void determineTemperatureLevel(temperatureSense *ts);
 
-// Create message text
-void determineData(temperatureSense *ts);
 
 #endif // TEMPERATURESENSE_H_

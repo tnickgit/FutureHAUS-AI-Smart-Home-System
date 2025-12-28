@@ -13,9 +13,3 @@ void determineTemperatureLevel(temperatureSense *ts)
     // temperature in fahrenheit with 1 decimal place
     ts->sensedTemperature = 23.0f + ((float)(rand() % 620)) / 10.0f;
 }
-
-void determineData(temperatureSense *ts)
-{
-    // print message
-    sprintf(ts->determination, "The temperature is %.1f°F", ts->sensedTemperature);
-}

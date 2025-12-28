@@ -5,8 +5,9 @@
 #include "temperatureSense.h"
 
 #define PAYLOAD_SIZE 256  // Enough for standard JSON messages
+#define MAC_STR_SIZE 18
 
-// 1. The Menu of available roles
+//possible sensor types
 enum SensorType {
     SENSOR_TYPE_WATER,
     SENSOR_TYPE_MOTION,
@@ -14,11 +15,12 @@ enum SensorType {
     SENSOR_TYPE_POWER
 };
 
-// 2. The Universal Container
+// containers truct for sensor node
 struct _sensorNode{
     //node properties
-    int nodeID;                 // Unique ID (derived from MAC or random)
-    enum SensorType type;       // What role am I playing?
+    char nodeID[MAC_STR_SIZE];
+    enum SensorType type;       // type of sensor
+    bool isRoot;
 
     //data properties
     float data;
@@ -33,7 +35,7 @@ struct _sensorNode{
 typedef struct _sensorNode sensorNode;
 
 // Constructor: Sets up the ID and Type
-sensorNode sensorNode_construct(enum SensorType type, int nodeID);
+sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot);
 
 void sensorNode_get_data(sensorNode *sn);
 

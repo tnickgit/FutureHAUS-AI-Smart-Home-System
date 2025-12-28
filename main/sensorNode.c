@@ -1,10 +1,11 @@
 #include "sensorNode.h"
 
 // Constructor
-sensorNode sensorNode_construct(enum SensorType type, int nodeID) {
+sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot) {
     sensorNode sn; // Initialize from template
     sn.type = type;
-    sn.nodeID = nodeID;
+    strncpy(sn.nodeID, nodeID, MAC_STR_SIZE);
+    sn.isRoot = isRoot;
     sn.data = 0;
     // Initialize payload with empty JSON just to be safe
     snprintf(sn.jsonPayload, PAYLOAD_SIZE, "{}");
@@ -54,10 +55,11 @@ void sensorNode_package_data(sensorNode *sn) {
     
     // NOTE: We use snprintf to prevent buffer overflows (crashing)
     snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
-             "{\"id\": %d, \"type\": %d, \"data\": \"%f\"}", 
+             "{\"id\": %s, \"type\": %d, \"data\": \"%f\", \"isRoot\": %s}", 
              sn->nodeID, 
              sn->type, 
-             sn->data);
+             sn->data,
+             sn->isRoot ? "true" : "false");
 }
 
 // Simple helper to get the pointer

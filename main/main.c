@@ -20,12 +20,16 @@
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
 #define ROUTER_PASS  "test12345"
 #define MESH_AP_PASS "mesh-pass"       // 8..63 chars; used by parents for child joins
-#define BUFFERSIZE   1024
+#define BUFFER_SIZE   1024
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define SENSOR_TYPE   SENSOR_TYPE_WATER   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_WATER   //change to whatever needed
 /******************************************************/    
+static sensorNode sensor_node; // global sensor node
+
+//for device ID
+static char macStr[18];
 
 static const char *TAG = "MESH_MIN";
 //arbitrary, just need one to function as a mesh, each node must have this okay
@@ -71,7 +75,6 @@ static void mesh_tx_task(void *arg) {
 
 
     //fix id logic later
-    sensorNode sensor_node = sensorNode_construct(SENSOR_TYPE, 1);
 
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
@@ -207,6 +210,11 @@ static void wifi_mesh_init(void) {
 
     TRY("esp_mesh_start", esp_mesh_start());
     ESP_LOGI(TAG, "mesh starting... using router SSID=\"%.*s\"", mcfg.router.ssid_len, mcfg.router.ssid);
+
+    // Get the Raw MAC and store it in macStr (for ID uses)
+    uint8_t mac[6];
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    snprintf(macStr, sizeof(macStr), MACSTR, MAC2STR(mac));
 }
 
 void app_main(void) {
@@ -217,5 +225,6 @@ void app_main(void) {
         nvs_flash_init();
     }
     wifi_mesh_init();
+    sensor_node = sensorNode_construct(NODE_TYPE, macStr, esp_mesh_is_root());
     xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 5, NULL);
 }
