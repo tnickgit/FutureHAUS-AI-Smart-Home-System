@@ -39,7 +39,7 @@ static uint8_t rx_buf[RX_SIZE]; // rx buffer used to transmit data
 
 
 //mesh tag
-static const char *TAG = "MESH_MIN";
+static const char *TAG = "ESP_MESH";
 
 //arbitrary, just need one to function as a mesh, each node must have this okay
 static const uint8_t MESH_ID[6] = {0x11,0x22,0x33,0x44,0x55,0x66};
@@ -124,9 +124,9 @@ static void root_polling_task(void *arg) {
                 esp_err_t err = esp_mesh_send(&node_table[i].mac_addr, &data, MESH_DATA_P2P, NULL, 0);
                 
                 if (err == ESP_OK) {
-                    ESP_LOGI(TAG, "Sent POLL to %s", node_table[i].id);
+                    ESP_LOGI("ROOT_LOGIC", "Sent POLL to %s", node_table[i].id);
                 } else {
-                    ESP_LOGW(TAG, "Failed to poll %s", node_table[i].id);
+                    ESP_LOGW("ROOT_LOGIC", "Failed to poll %s", node_table[i].id);
                 }
             }
             
@@ -226,7 +226,8 @@ static void mesh_tx_task(void *arg) {
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
         if (s_mesh_started && s_has_parent && !s_is_root) {
-
+            sensorNode_get_data(&sensor_node);
+            sensorNode_package_data(&sensor_node);
             mesh_data_t data = {
                 .data  = (uint8_t*)sensor_node.jsonPayload,
                 .size  = (uint16_t)(strlen(sensor_node.jsonPayload) + 1),
@@ -235,14 +236,12 @@ static void mesh_tx_task(void *arg) {
             };
             if(sensor_node.polled){
                 sensor_node.polled = false; // reset poll flag
-                sensorNode_get_data(&sensor_node);
-                sensorNode_package_data(&sensor_node);
                 esp_err_t err = esp_mesh_send(NULL, &data, 0, NULL, 0);
                 if (err != ESP_OK) {
-                    ESP_LOGW(TAG, "send failed: %s (0x%x)", esp_err_to_name(err), err);
+                    ESP_LOGW("NODE_LOGIC", "send failed: %s (0x%x)", esp_err_to_name(err), err);
                 }
                 else {
-                    ESP_LOGI(TAG, "sent: %s", sensor_node.jsonPayload);
+                    ESP_LOGI("NODE_LOGIC", "sent: %s", sensor_node.jsonPayload);
                 }
             }
         
@@ -253,7 +252,7 @@ static void mesh_tx_task(void *arg) {
                 sensorNode_get_data(&sensor_node); // read Sensor
                 sensorNode_package_data(&sensor_node); //package data
 
-                ESP_LOGI(TAG, "ROOT SENSOR: %s", sensor_node.jsonPayload);
+                ESP_LOGI("ROOT_SENSOR", "%s", sensor_node.jsonPayload);
             }
 
             //ADD LOGIC TO SEND TO SERVER HERE, POSSIBLY ALSO JUST ADD TO RX TASK WHEN RECIEVING
