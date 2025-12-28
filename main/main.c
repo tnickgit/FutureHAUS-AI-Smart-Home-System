@@ -14,8 +14,7 @@
 #include "esp_wifi.h"
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
-#include "waterSense.h"
-#include "temperatureSense.h"
+#include "sensorNode.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
 #define ROUTER_SSID  "esp_test"   // iPhone hotspot name = iPhone device "Name"
@@ -24,8 +23,12 @@
 #define BUFFERSIZE   1024
 /******************************************************/
 
+/************* EDIT THIS FOR SENSOR TYPE  *************/
+#define SENSOR_TYPE   SENSOR_TYPE_WATER   //change to whatever needed
+/******************************************************/    
+
 static const char *TAG = "MESH_MIN";
-//arbitrary, just need one to function as a mesh, each node must have this 
+//arbitrary, just need one to function as a mesh, each node must have this okay
 static const uint8_t MESH_ID[6] = {0x11,0x22,0x33,0x44,0x55,0x66};
 
 //pretty self explanatory
@@ -66,38 +69,20 @@ static void mesh_rx_task(void *arg) {
 
 static void mesh_tx_task(void *arg) {
 
-    waterSense sensor = waterSense_construct();
-    temperatureSense temp_sensor = temperatureSense_construct();
+
+    //fix id logic later
+    sensorNode sensor_node = sensorNode_construct(SENSOR_TYPE, 1);
 
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     for (;;) {
-        // water
-        determineWaterLevel(&sensor);
-        determineWaterData(&sensor);
-        combineData(&sensor);
-
-        // temperature
-        determineTemperatureLevel(&temp_sensor);
-        determineData(&temp_sensor);
-
         if (s_mesh_started && s_has_parent && !s_is_root) {
-            char msg[500];
-            snprintf(msg, sizeof(msg), "hi from Kitchen, MAC:" MACSTR, MAC2STR(mac));
-            // when flashing to each board make sure to either comment out the water, temp, electricity, or lighting 
-            // snprintf
-            // water
-            snprintf(msg, sizeof(msg), sensor.determination);
-
-            // temperature
-            snprintf(msg, sizeof(msg), temp_sensor.determination);
-
-            // lighting
-            // energy
+            sensorNode_get_data(&sensor_node);
+            sensorNode_package_data(&sensor_node);
 
             mesh_data_t data = {
-                .data  = (uint8_t*)msg,
-                .size  = (uint16_t)(strlen(msg) + 1),
+                .data  = (uint8_t*)sensor_node.jsonPayload,
+                .size  = (uint16_t)(strlen(sensor_node.jsonPayload) + 1),
                 .proto = MESH_PROTO_BIN,
                 .tos   = MESH_TOS_P2P
             };
@@ -106,7 +91,7 @@ static void mesh_tx_task(void *arg) {
                 ESP_LOGW(TAG, "send failed: %s (0x%x)", esp_err_to_name(err), err);
             }
             else {
-                ESP_LOGI(TAG, "sent: %s", msg);
+                ESP_LOGI(TAG, "sent: %s", sensor_node.jsonPayload);
             }
         }
         vTaskDelay(pdMS_TO_TICKS(2000));

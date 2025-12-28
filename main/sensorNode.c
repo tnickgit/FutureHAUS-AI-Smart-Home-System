@@ -1,0 +1,66 @@
+#include "sensorNode.h"
+
+// Constructor
+sensorNode sensorNode_construct(enum SensorType type, int nodeID) {
+    sensorNode sn; // Initialize from template
+    sn.type = type;
+    sn.nodeID = nodeID;
+    sn.data = 0;
+    // Initialize payload with empty JSON just to be safe
+    snprintf(sn.jsonPayload, PAYLOAD_SIZE, "{}");
+
+    return sn;
+}
+
+void sensorNode_get_data(sensorNode *sn) {
+    if(!sn->constructed){
+        sn->constructed = true;
+        switch(sn->type) {
+            case SENSOR_TYPE_WATER:
+                sn->ws = waterSense_construct();
+                sn->data = sn->ws.sensedNumber;
+                break;
+            case SENSOR_TYPE_TEMP:
+                sn->ts = temperatureSense_construct();
+                sn->data = sn->ts.sensedTemperature;
+                break;
+            default:
+                //ESP_LOGW("DEFAULT_NO_TYPE");
+                break;
+        }
+    }
+    else{
+        switch(sn->type) {
+            case SENSOR_TYPE_WATER:
+                determineWaterLevel(&sn->ws);
+                sn->data = sn->ws.totalNumber;
+                break;
+            case SENSOR_TYPE_TEMP:
+                determineTemperatureLevel(&sn->ts);
+                sn->data = sn->ts.sensedTemperature;
+                break;
+            default:
+                //ESP_LOGW("DEFAULT_NO_TYPE");
+                break;
+        }
+    }
+
+}
+
+// The "Wrapper" logic
+void sensorNode_package_data(sensorNode *sn) {
+    // We create a standard JSON format:
+    // { "id": 123, "type": 1, "data": "Your raw string here" }
+    
+    // NOTE: We use snprintf to prevent buffer overflows (crashing)
+    snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
+             "{\"id\": %d, \"type\": %d, \"data\": \"%f\"}", 
+             sn->nodeID, 
+             sn->type, 
+             sn->data);
+}
+
+// Simple helper to get the pointer
+char* getSensorNodeMessage(sensorNode *sn) {
+    return sn->jsonPayload;
+}
