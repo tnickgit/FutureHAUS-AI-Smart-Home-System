@@ -14,7 +14,7 @@
 #include "esp_wifi.h"
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
-#include "sensorNode.h"
+#include "src/sensorNode.h"
 #include "cJSON.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_TEMP   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_WATER   //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -124,9 +124,9 @@ static void root_polling_task(void *arg) {
                 esp_err_t err = esp_mesh_send(&node_table[i].mac_addr, &data, MESH_DATA_P2P, NULL, 0);
                 
                 if (err == ESP_OK) {
-                    ESP_LOGI("ROOT_LOGIC", "Sent POLL to %s", node_table[i].id);
+                    ESP_LOGI("ROOT_SEND", "Sent POLL to %s", node_table[i].id);
                 } else {
-                    ESP_LOGW("ROOT_LOGIC", "Failed to poll %s", node_table[i].id);
+                    ESP_LOGW("ROOT_SEND", "Failed to poll %s", node_table[i].id);
                 }
             }
             
@@ -161,15 +161,15 @@ void mesh_rx_task(void *arg) {
             else {
                 // child logic
                 if(strstr((char*)data.data, "POLL_DATA")) {
-                    ESP_LOGI("CHILD_LOGIC", "Received POLL_DATA command from Root");
+                    ESP_LOGI("NODE_RECV", "Received POLL_DATA command from Root");
                     sensor_node.polled = true;
                 } 
                  else
                 if (strstr((char*)data.data, "FAN_ON")) {
-                    ESP_LOGI("CHILD_LOGIC", "Turning FAN ON");
+                    ESP_LOGI("NODE_RECV", "Turning FAN ON");
                 } 
                 else if (strstr((char*)data.data, "FAN_OFF")) {
-                    ESP_LOGI("CHILD_LOGIC", "Turning FAN OFF");
+                    ESP_LOGI("NODE_RECV", "Turning FAN OFF");
                 }
             }
         }
@@ -179,7 +179,7 @@ void mesh_rx_task(void *arg) {
 }
 
 void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
-    ESP_LOGI("ROOT_LOGIC", "Processing data from Child: %s", payload);
+    ESP_LOGI("ROOT_RECV", "Processing data from Child: %s", payload);
 
     cJSON *root = cJSON_Parse((char *)payload);
     if (root) {
@@ -199,10 +199,10 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
             // Logic: Decide on Feedback
             if (temp > 75.0) {
                 cmd = "{\"cmd\": \"FAN_ON\"}"; // Updated to be proper JSON if you like
-                ESP_LOGW("ROOT_LOGIC", "High Temp (%.1f). Sending FAN_ON.", temp);
+                ESP_LOGW("ROOT_PROCESS", "High Temp (%.1f). Sending FAN_ON.", temp);
             } else {
                 cmd = "{\"cmd\": \"FAN_OFF\"}";
-                ESP_LOGI("ROOT_LOGIC", "Temp OK (%.1f). Sending FAN_OFF.", temp);
+                ESP_LOGI("ROOT_PROCESS", "Temp OK (%.1f). Sending FAN_OFF.", temp);
             }
 
             // Send Feedback
@@ -216,7 +216,7 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
         }
         cJSON_Delete(root);
     } else {
-        ESP_LOGE("ROOT_LOGIC", "Failed to parse JSON");
+        ESP_LOGE("ROOT_PROC", "Failed to parse JSON");
     }
 }
 
@@ -238,10 +238,10 @@ static void mesh_tx_task(void *arg) {
                 sensor_node.polled = false; // reset poll flag
                 esp_err_t err = esp_mesh_send(NULL, &data, 0, NULL, 0);
                 if (err != ESP_OK) {
-                    ESP_LOGW("NODE_LOGIC", "send failed: %s (0x%x)", esp_err_to_name(err), err);
+                    ESP_LOGW("NODE_SEND", "send failed: %s (0x%x)", esp_err_to_name(err), err);
                 }
                 else {
-                    ESP_LOGI("NODE_LOGIC", "sent: %s", sensor_node.jsonPayload);
+                    ESP_LOGI("NODE_SEND", "sent: %s", sensor_node.jsonPayload);
                 }
             }
         
