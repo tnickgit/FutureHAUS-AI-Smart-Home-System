@@ -14,7 +14,8 @@
 #include "esp_wifi.h"
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
-#include "src/sensorNode.h"
+#include "src/sensors/sensorNode.h"
+#include "src/WebSocket/wss_client.h"
 #include "cJSON.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/
@@ -159,6 +160,7 @@ void mesh_rx_task(void *arg) {
                 process_root_rx(&from, data.data);
             } 
             else {
+                //CHILD LOGIC, NEED TO IMPLEMENT CJSON PARSING DATA AND READING FROM JSON FILE
                 // child logic
                 if(strstr((char*)data.data, "POLL_DATA")) {
                     ESP_LOGI("NODE_RECV", "Received POLL_DATA command from Root");
@@ -180,7 +182,7 @@ void mesh_rx_task(void *arg) {
 
 void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     ESP_LOGI("ROOT_RECV", "Processing data from Child: %s", payload);
-
+    wss_send((char*)payload);
     cJSON *root = cJSON_Parse((char *)payload);
     if (root) {
         cJSON *data_item = cJSON_GetObjectItem(root, "data");
@@ -193,7 +195,7 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
         }
 
         if (cJSON_IsString(data_item)) {
-            float temp = atof(data_item->valuestring);
+            float temp = atof(data_item->valuestring); // ascii to float
             const char *cmd;
 
             // Logic: Decide on Feedback
@@ -279,6 +281,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         s_mesh_started = false;
         s_has_parent = false;
         s_is_root = false;
+        wss_stop();
         s_rx_task_running = false; // safe to allow re-create next time
         s_layer = -1;
         ESP_LOGI(TAG, "mesh stopped");
@@ -288,6 +291,10 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         s_has_parent = true;
         s_is_root = esp_mesh_is_root();
         sensor_node.isRoot = s_is_root; // update sensor node's isRoot status
+        if (s_is_root) {
+            ESP_LOGI(TAG, "Root starting WSS...");
+            wss_start();
+        }
         s_layer = esp_mesh_get_layer();
         ESP_LOGI(TAG, "parent connected, layer=%d, root=%d", s_layer, s_is_root);
 
@@ -305,6 +312,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
     case MESH_EVENT_PARENT_DISCONNECTED:
         s_has_parent = false;
         s_is_root = false;
+        wss_stop();
         ESP_LOGW(TAG, "parent disconnected");
         break;
 

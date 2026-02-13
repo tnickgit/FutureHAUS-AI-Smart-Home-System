@@ -15,6 +15,8 @@ sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot)
 void sensorNode_get_data(sensorNode *sn) {
     if(!sn->constructed){
         sn->constructed = true;
+        //switch statement used to call sensor constructor
+        
         switch(sn->type) {
             case SENSOR_TYPE_WATER:
                 sn->ws = waterSense_construct();
