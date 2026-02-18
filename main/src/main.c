@@ -15,7 +15,7 @@
 #include "esp_mesh.h"
 #include "esp_mac.h"   // MACSTR, MAC2STR, esp_read_mac
 #include "src/sensors/sensorNode.h"
-#include "src/WebSocket/wss_client.h"
+#include "src/WebSocket/ws_client.h"
 #include "cJSON.h"
 
 /************* EDIT THESE FOR YOUR NETWORK *************/

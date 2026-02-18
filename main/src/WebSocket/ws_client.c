@@ -1,15 +1,11 @@
-#include "wss_client.h"
+#include "ws_client.h"
 #include "esp_log.h"
 
-static const char *TAG = "WSS_CLIENT";
+static const char *TAG = "WS_CLIENT";
 static esp_websocket_client_handle_t client_handle = NULL;
 
 // --- CONFIGURATION ---
 // Note: For real production WSS, you usually need to provide .cert_pem
-const esp_websocket_client_config_t ws_cfg = {
-    .uri = "ws://echo.websocket.org", // Replace with your server
-    .port = 443
-};
 
 // --- INTERNAL EVENT HANDLER ---
 static void websocket_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
@@ -33,13 +29,26 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
 
 // --- PUBLIC FUNCTIONS ---
 void wss_start(void) {
-    if (client_handle != NULL) {
-        ESP_LOGW(TAG, "Client already started");
+    if (client_handle != NULL) return;
+
+    ESP_LOGI(TAG, "FORCING PLAIN TCP CONNECTION...");
+
+    esp_websocket_client_config_t local_cfg = {
+        // Use 'host' instead of 'uri' to prevent the URI parser 
+        // from accidentally triggering the SSL/TLS scheme.
+        .host = "192.168.4.3", 
+        .port = 8765,
+        .transport = WEBSOCKET_TRANSPORT_OVER_TCP,
+        .path = "/", // Your Python script expects a path, usually "/"
+    }; 
+
+    client_handle = esp_websocket_client_init(&local_cfg);
+    
+    if (client_handle == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize WebSocket client handle!");
         return;
     }
 
-    ESP_LOGI(TAG, "Initializing WSS Client...");
-    client_handle = esp_websocket_client_init(&ws_cfg);
     esp_websocket_register_events(client_handle, WEBSOCKET_EVENT_ANY, websocket_event_handler, (void *)client_handle);
     esp_websocket_client_start(client_handle);
 }
