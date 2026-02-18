@@ -268,6 +268,18 @@ static void mesh_tx_task(void *arg) {
 
 /************* events *************/
 static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, void *event_data) {
+    
+    // --- PART 1: IP EVENT HANDLING (Crucial for WebSocket Success) ---
+    if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Root Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        
+        // Start the WebSocket client now that we have an actual connection to the router
+        wss_start(); 
+        return;
+    }
+
+    // --- PART 2: MESH EVENT HANDLING ---
     if (base != MESH_EVENT) return;
 
     switch (id) {
@@ -282,7 +294,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         s_has_parent = false;
         s_is_root = false;
         wss_stop();
-        s_rx_task_running = false; // safe to allow re-create next time
+        s_rx_task_running = false; 
         s_layer = -1;
         ESP_LOGI(TAG, "mesh stopped");
         break;
@@ -290,15 +302,17 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
     case MESH_EVENT_PARENT_CONNECTED:
         s_has_parent = true;
         s_is_root = esp_mesh_is_root();
-        sensor_node.isRoot = s_is_root; // update sensor node's isRoot status
+        sensor_node.isRoot = s_is_root;
+        
         if (s_is_root) {
-            ESP_LOGI(TAG, "Root starting WSS...");
-            wss_start();
+            // We don't call wss_start() here anymore; we wait for IP_EVENT_STA_GOT_IP
+            ESP_LOGI(TAG, "Root connected to Mesh. Waiting for IP from Router...");
         }
+        
         s_layer = esp_mesh_get_layer();
         ESP_LOGI(TAG, "parent connected, layer=%d, root=%d", s_layer, s_is_root);
 
-        //start RX task once
+        // Start RX task once
         if (!s_rx_task_running) {
             if (xTaskCreate(mesh_rx_task, "mesh_rx", 4096, NULL, 5, NULL) == pdPASS) {
                 s_rx_task_running = true;
@@ -312,6 +326,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
     case MESH_EVENT_PARENT_DISCONNECTED:
         s_has_parent = false;
         s_is_root = false;
+        // Kill the WebSocket connection if the Root loses its uplink
         wss_stop();
         ESP_LOGW(TAG, "parent disconnected");
         break;
@@ -319,7 +334,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
     case MESH_EVENT_LAYER_CHANGE: {
         mesh_event_layer_change_t *e = (mesh_event_layer_change_t*)event_data;
         int old = s_layer;
-        s_layer = e->new_layer;                // some IDF variants only expose new_layer
+        s_layer = e->new_layer;
         ESP_LOGI(TAG, "layer change: %d -> %d", old, s_layer);
         break;
     }
@@ -379,6 +394,10 @@ static void wifi_mesh_init(void) {
     if (TRY("esp_mesh_set_config", esp_mesh_set_config(&mcfg)) != ESP_OK) return;
 
     TRY("esp_wifi_set_ps(NONE)", esp_wifi_set_ps(WIFI_PS_NONE));
+
+    //NEW FOR WS SERVER
+    TRY("register IP_EVENT handler",
+    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &mesh_event_handler, NULL, NULL));
 
     TRY("esp_mesh_start", esp_mesh_start());
     ESP_LOGI(TAG, "mesh starting... using router SSID=\"%.*s\"", mcfg.router.ssid_len, mcfg.router.ssid);

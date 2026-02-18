@@ -31,15 +31,10 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
 void wss_start(void) {
     if (client_handle != NULL) return;
 
-    ESP_LOGI(TAG, "FORCING PLAIN TCP CONNECTION...");
+    ESP_LOGI(TAG, "Starting WebSocket Client...");
 
-    esp_websocket_client_config_t local_cfg = {
-        // Use 'host' instead of 'uri' to prevent the URI parser 
-        // from accidentally triggering the SSL/TLS scheme.
-        .host = "192.168.4.3", 
-        .port = 8765,
-        .transport = WEBSOCKET_TRANSPORT_OVER_TCP,
-        .path = "/", // Your Python script expects a path, usually "/"
+    const esp_websocket_client_config_t local_cfg = {
+        .uri = "ws://192.168.4.2:8765", // Use the URI that worked in your standalone test
     }; 
 
     client_handle = esp_websocket_client_init(&local_cfg);
@@ -55,7 +50,7 @@ void wss_start(void) {
 
 void wss_stop(void) {
     if (client_handle) {
-        ESP_LOGI(TAG, "Stopping WSS Client...");
+        ESP_LOGI(TAG, "Stopping WS Client...");
         esp_websocket_client_stop(client_handle);
         esp_websocket_client_destroy(client_handle);
         client_handle = NULL;
