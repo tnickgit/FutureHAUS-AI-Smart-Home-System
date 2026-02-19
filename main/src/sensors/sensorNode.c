@@ -50,15 +50,59 @@ void sensorNode_get_data(sensorNode *sn) {
 
 // The "Wrapper" logic
 void sensorNode_package_data(sensorNode *sn) {
-    // We create a standard JSON format:
-    // { "id": 123, "type": 1, "data": "Your raw string here" }
-    
-    // NOTE: We use snprintf to prevent buffer overflows (crashing)
+    // esp_timer_get_time returns microseconds; divide by 1000 for ms
+    int64_t uptime_ms = esp_timer_get_time() / 1000;
+
     snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
-             "{\"id\": \"%s\", \"type\": %d, \"data\": \"%f\", \"isRoot\": %s}", 
+             "{\"src_id\": \"%s\", \"node_type\": \"SENSOR\", \"sensor_type\": %d, \"data\": \"%f\", \"isRoot\": %s, \"timestamp\": %lld}", 
              sn->nodeID, 
              sn->type, 
              sn->data,
-             sn->isRoot ? "true" : "false");
+             sn->isRoot ? "true" : "false",
+             uptime_ms);
 }
 
+bool process_json_data(sensorNode *sn, char* jsonData) {
+    if (jsonData == NULL) return false;
+
+    cJSON *root = cJSON_Parse(jsonData);
+    if (root == NULL) {
+        ESP_LOGE("SENSOR_NODE", "Failed to parse command JSON");
+        return false;
+    }
+
+    bool handled = false;
+    cJSON *cmd_item = cJSON_GetObjectItem(root, "cmd");
+
+    if (cJSON_IsString(cmd_item) && (cmd_item->valuestring != NULL)) {
+        const char *command = cmd_item->valuestring;
+
+        // 1. Handle Polling Request
+        if (strcmp(command, "POLL_DATA") == 0) {
+            sn->polled = true;
+            handled = true;
+        } 
+        // 2. Handle Actuator Commands (Example: Fan)
+        else if (strcmp(command, "SET_TEMP") == 0) {
+            cJSON *temp_item = cJSON_GetObjectItem(root, "value");
+            
+            // Check if "value" exists and is a literal number (not a string)
+            if (cJSON_IsNumber(temp_item)) {
+                int target_temp = temp_item->valueint; // Extract as integer
+                // Perform your hardware logic here
+                // e.g., update_hvac_threshold(target_temp);
+                ESP_LOGI("SENSOR_NODE", "Command received: Setting temp to %d", target_temp);
+                handled = true;
+            } else {
+                ESP_LOGW("SENSOR_NODE", "SET_TEMP failed: 'value' is missing or not a number");
+            }
+        }
+        else if (strcmp(command, "FAN_OFF") == 0) {
+            ESP_LOGI("SENSOR_NODE", "Command received: Deactivating Fan");
+            handled = true;
+        }
+    }
+
+    cJSON_Delete(root);
+    return handled;
+}

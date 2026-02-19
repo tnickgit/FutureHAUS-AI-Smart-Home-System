@@ -3,6 +3,10 @@
 
 #include "waterSense.h"
 #include "temperatureSense.h"
+#include "esp_timer.h"
+#include "cJSON.h"
+#include "esp_log.h"
+
 
 #define PAYLOAD_SIZE 256  // Enough for standard JSON messages
 #define MAC_STR_SIZE 18
@@ -10,7 +14,7 @@
 //possible sensor types
 enum SensorType {
     SENSOR_TYPE_WATER,
-    SENSOR_TYPE_MOTION,
+    SENSOR_TYPE_LIGHT,
     SENSOR_TYPE_TEMP,
     SENSOR_TYPE_POWER
 };
@@ -43,5 +47,7 @@ void sensorNode_get_data(sensorNode *sn);
 // Packager: Takes raw data string (e.g., "75.4 F") and wraps it in JSON
 void sensorNode_package_data(sensorNode *sn);
 
+//takes in json data and sensornode objects, reacts accordingly
+bool process_json_data(sensorNode *sn, char* jsonData);
 
 #endif
