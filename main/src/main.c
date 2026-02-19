@@ -34,15 +34,14 @@
 char macStr[18]; //for device ID
 sensorNode sensor_node; // global sensor node
 
-bool conn = false;
-
+// rx globals
 static uint8_t rx_buf[RX_SIZE]; // rx buffer used to transmit data
+static bool s_rx_task_running = false; // rx running flag
 
-
-//mesh tag
+//mesh tag for console logging
 static const char *TAG = "ESP_MESH";
 
-//arbitrary, just need one to function as a mesh, each node must have this okay
+//arbitrary, just need one to function as a mesh, each node must have this
 static const uint8_t MESH_ID[6] = {0x11,0x22,0x33,0x44,0x55,0x66};
 
 //pretty self explanatory
@@ -50,27 +49,21 @@ static bool s_is_root = false;
 static bool s_mesh_started = false;
 static bool s_has_parent = false;
 
-//completely forgot what this is used for, no clue tho
-//static int  s_layer = -1;  // track ourselves since some IDF structs don't give old_layer
-
+//prototype for helper function
+void process_root_rx(mesh_addr_t *from, uint8_t *payload);
 
 //used for node table at root ( will be changed to WSS eventually )
 typedef struct {
-    char id[MAC_STR_SIZE];
-    mesh_addr_t mac_addr; // Store binary MAC for routing
+    char id[MAC_STR_SIZE];        // src_id
+    mesh_addr_t mac_addr;         // store binary for routing
+    int sensor_type;              // so server knows what kind of node it is
+    bool is_root;                 
     bool active;
 } NodeEntry;
 
 //node table globals
 static NodeEntry node_table[MAX_NODES];
 static int node_count = 0;
-
-// rx running flag
-static bool s_rx_task_running = false;
-
-//prototype for helper function
-void process_root_rx(mesh_addr_t *from, uint8_t *payload);
-
 
 //returns esp error or ESP_OK if the function is working
 static esp_err_t TRY(const char *what, esp_err_t err) {
@@ -94,7 +87,7 @@ void update_node_table(char* id_str, mesh_addr_t *raw_mac) {
         node_table[node_count].mac_addr = *raw_mac;
         node_table[node_count].active = true;
         node_count++;
-        ESP_LOGI(TAG, "New Node Discovered! ID: %s (Total: %d)", id_str, node_count);
+        ESP_LOGI(TAG, "New node in mesh, ID: %s (Total: %d)", id_str, node_count);
     }
 }
 
@@ -135,40 +128,42 @@ void mesh_rx_task(void *arg) {
     data.size = RX_SIZE;
 
     while (1) {
+        //get data
         data.size = RX_SIZE;
-        // Wait for data...
         err = esp_mesh_recv(&from, &data, portMAX_DELAY, &flag, NULL, 0);
 
+        //if no error and data is not empty, null terminate data
         if (err == ESP_OK && data.size > 0) {
-            // Null-terminate to ensure string functions work safely
+            //null terminate strings
             rx_buf[data.size] = '\0'; 
 
+            //send to root rx
             if (esp_mesh_is_root()) {
-                // Root still handles forwarding to WebSocket and node table
+                //root handles forwarding to WS server and stores data
                 process_root_rx(&from, data.data);
             } 
+            //send to child process data
             else {
-                // Child nodes now use the JSON processor
+                //child nodes process their own JSON
                 if (!process_json_data(&sensor_node, (char*)data.data)) {
                     ESP_LOGW("NODE_RECV", "Received unknown or malformed command");
                 }
             }
         }
-        // Small delay to prevent watchdog issues if the loop runs too fast
+        //delay for watchdog
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL);
 }
 
 void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
-    // 1. Log that we got something from the mesh
-    ESP_LOGI("ROOT_BRIDGE", "Forwarding Child data to Mac: %s", payload);
+    //log that it was recieved through mesh
+    ESP_LOGI("ROOT_BRIDGE", "Forwarding Child data to Server: %s", payload);
     
-    // 2. IMMEDIATELY send the raw JSON to the MacBook
+    //send to server immediately
     ws_send((char*)payload);
 
-    // 3. We still need to update the node table so the Root knows 
-    // where the children are for the MacBook's future commands.
+    //take out data for node table
     cJSON *root = cJSON_Parse((char *)payload);
     if (root) {
         cJSON *id_item = cJSON_GetObjectItem(root, "src_id");
@@ -179,18 +174,15 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     } else {
         ESP_LOGE("ROOT_PROC", "Failed to parse Child JSON for Node Table");
     }
-
-    
-    // NOTE: All "If temp > 75" logic is removed. 
-    // The Mac will now receive the data and send a command back if needed.
 }
 
 static void mesh_tx_task(void *arg) {
     TickType_t last_root_poll = 0;
 
     for (;;) {
-        // ---- CHILD NODE PATH ----
+        //CHILD NODES
         if (s_mesh_started && s_has_parent && !s_is_root) {
+            //IF POLL VAR IS TRUE, POLL AND SEND DATA TO ROOT
             if (sensor_node.polled) {
                 sensor_node.polled = false;
                 sensorNode_get_data(&sensor_node);
@@ -211,9 +203,9 @@ static void mesh_tx_task(void *arg) {
                 }
             }
         }
-        // ---- ROOT NODE PATH ----
+        //ROOT NODE
         else if (s_is_root && s_mesh_started) {
-            // Self-poll every 10s using a tick timer instead of a blocking delay
+            //self poll 10s
             TickType_t now = xTaskGetTickCount();
             if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
                 last_root_poll = now;
@@ -230,16 +222,13 @@ static void mesh_tx_task(void *arg) {
                 ws_send(sensor_node.jsonPayload);
             }
         }
-
-        // Single delay at the bottom — keeps the task from spinning
+        //prevent watchdog crashes
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
 /************* events *************/
 static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, void *event_data) {
-
-    // --- 1. IP EVENT ---
     // NOTE: This handler is registered for BOTH MESH_EVENT and IP_EVENT.
     // The IP_EVENT branch MUST come first, before the MESH_EVENT-only guard below.
     if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
@@ -255,13 +244,13 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         } else {
             ESP_LOGE("ROUTING_FIX", "Could not find WIFI_STA_DEF netif!");
         }
-
-        // Small delay to let the IP stack settle before opening a TCP socket
+        //delay for IP stack to settle 
         vTaskDelay(pdMS_TO_TICKS(500));
-
+        //start WS server
         ws_start();
         return; // done with IP event
     }
+
     // --- 2. MESH EVENTS ---
     if (base != MESH_EVENT) return;
 
@@ -278,19 +267,17 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
             
             if (s_is_root) {
                 ESP_LOGI(TAG, "Root connected to AP. Manually starting DHCP client...");
-                
-                // This ensures the network stack actually starts looking for an IP
+                //Forcing DHCP IP configuration, had issues with this before
                 esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
                 if (netif) {
                     esp_netif_dhcpc_stop(netif);
                     esp_netif_dhcpc_start(netif);
                 }
-                } 
+            } 
             else {
-                ESP_LOGI(TAG, "I am a Child. Connected to Mesh parent.");
+                ESP_LOGI(TAG, "Child connected to parent node.");
             }
-
-            // Start the RX task on every node so they can hear Root commands
+            // start rx task AFTER setting up DHCP IP configuration
             if (!s_rx_task_running) {
                 if (xTaskCreate(mesh_rx_task, "mesh_rx", 4096, NULL, 5, NULL) == pdPASS) {
                     s_rx_task_running = true;
@@ -301,7 +288,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         case MESH_EVENT_PARENT_DISCONNECTED:
             s_has_parent = false;
             s_is_root = false;
-            // If the Root loses the AP, or a Child loses the Root, shut down WS
+            //if root loses AP
             ws_stop(); 
             ESP_LOGW(TAG, "Parent disconnected.");
             break;
@@ -379,7 +366,7 @@ static void wifi_mesh_init(void) {
     TRY("esp_mesh_start", esp_mesh_start());
     ESP_LOGI(TAG, "mesh starting... using router SSID=\"%.*s\"", mcfg.router.ssid_len, mcfg.router.ssid);
 
-    // Get the Raw MAC and store it in macStr (for ID uses)
+    //get the Raw MAC and store it in macStr (for ID uses)
     uint8_t mac[6];
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
     snprintf(macStr, sizeof(macStr), MACSTR, MAC2STR(mac));
@@ -392,10 +379,6 @@ void app_main(void) {
         nvs_flash_erase();
         nvs_flash_init();
     }
-
-    esp_log_level_set("esp-tls", ESP_LOG_DEBUG);
-    esp_log_level_set("transport_base", ESP_LOG_DEBUG);
-    esp_log_level_set("TRANS_TCP", ESP_LOG_DEBUG);
 
     wifi_mesh_init();
     sensor_node = sensorNode_construct(NODE_TYPE, macStr, esp_mesh_is_root());

@@ -57,7 +57,8 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
                             mesh_data.size = data->data_len;
                             mesh_data.proto = MESH_PROTO_BIN;
                             mesh_data.tos = MESH_TOS_P2P;
-
+                            
+                            ESP_LOGI("ESP_MESH", "Sending command to child: %s", target_mac_str);
                             esp_mesh_send(&child_addr, &mesh_data, MESH_DATA_P2P, NULL, 0);
                         }
                     }
@@ -79,7 +80,7 @@ void ws_start(void) {
 
     const esp_websocket_client_config_t local_cfg = {
         //CHANGE URI BASED ON SERVER 
-        .uri = "ws://192.168.1.42:8765",
+        .uri = "ws://192.168.1.215:8765",
         .network_timeout_ms = 5000,      // Increase to 30s
         .buffer_size = 2048,              // Double the buffer for mesh overhead
         .reconnect_timeout_ms = 10000

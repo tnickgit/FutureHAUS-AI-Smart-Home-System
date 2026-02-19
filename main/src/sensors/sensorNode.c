@@ -54,7 +54,7 @@ void sensorNode_package_data(sensorNode *sn) {
     int64_t uptime_ms = esp_timer_get_time() / 1000;
 
     snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
-             "{\"src_id\": \"%s\", \"node_type\": \"SENSOR\", \"sensor_type\": %d, \"data\": \"%f\", \"isRoot\": %s, \"timestamp\": %lld}", 
+             "{\"src_id\": \"%s\", \"mode\":\"SEND_DATA\",\"node_type\": \"SENSOR\", \"sensor_type\": %d, \"data\": \"%f\", \"isRoot\": %s, \"timestamp\": %lld}", 
              sn->nodeID, 
              sn->type, 
              sn->data,
