@@ -28,13 +28,15 @@ NetworkServer server(80);
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-
   Serial.begin(115200);
-  Serial.println();
   Serial.println("Configuring access point...");
 
-  // You can remove the password parameter if you want the AP to be open.
-  // a valid password must have more than 7 characters
+  // Move AP to 10.0.0.x so it doesn't collide with esp_mesh's 192.168.4.x subnet
+  IPAddress local_ip(10, 0, 0, 1);
+  IPAddress gateway(10, 0, 0, 1);
+  IPAddress subnet(255, 255, 255, 0);
+  WiFi.softAPConfig(local_ip, gateway, subnet);
+
   if (!WiFi.softAP(ssid, password)) {
     log_e("Soft AP creation failed.");
     while (1);

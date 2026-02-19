@@ -21,5 +21,6 @@
     "watersense.h": "c",
     "string.h": "c"
   },
-  "idf.portWin": "COM5"
+  "idf.portWin": "COM5",
+  "idf.currentSetup": "/Users/aaronsimpson/esp/esp-idf"
 }

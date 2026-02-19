@@ -182,7 +182,7 @@ void mesh_rx_task(void *arg) {
 
 void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     ESP_LOGI("ROOT_RECV", "Processing data from Child: %s", payload);
-    wss_send((char*)payload);
+    ws_send((char*)payload);
     cJSON *root = cJSON_Parse((char *)payload);
     if (root) {
         cJSON *data_item = cJSON_GetObjectItem(root, "data");
@@ -250,17 +250,18 @@ static void mesh_tx_task(void *arg) {
         }
         else if(s_is_root && s_mesh_started){
             if(sensor_node.polled){
-                sensor_node.polled = false; // reset poll flag
-                sensorNode_get_data(&sensor_node); // read Sensor
-                sensorNode_package_data(&sensor_node); //package data
+                sensor_node.polled = false; 
+                sensorNode_get_data(&sensor_node); 
+                sensorNode_package_data(&sensor_node); 
 
-                ESP_LOGI("ROOT_SENSOR", "%s", sensor_node.jsonPayload);
+                // Log it locally so you know the sensor is working
+                ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
+                
+                // --- THIS IS THE CRITICAL LINE ---
+                // This sends the Root's own sensor data to your MacBook
+                ws_send(sensor_node.jsonPayload); 
             }
-
-            //ADD LOGIC TO SEND TO SERVER HERE, POSSIBLY ALSO JUST ADD TO RX TASK WHEN RECIEVING
-            //SO THAT IT JUST FORWARDS, WILL NEED TO HANDLE DATA TRANSMISSION FROM ROOT SENSOR THOUGH
-            
-    }
+        }
     
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
@@ -268,87 +269,86 @@ static void mesh_tx_task(void *arg) {
 
 /************* events *************/
 static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, void *event_data) {
-    
-    // --- PART 1: IP EVENT HANDLING (Crucial for WebSocket Success) ---
-    if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI(TAG, "Root Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
-        
-        // Start the WebSocket client now that we have an actual connection to the router
-        wss_start(); 
-        return;
-    }
 
-    // --- PART 2: MESH EVENT HANDLING ---
+    // --- 1. IP EVENT ---
+    // NOTE: This handler is registered for BOTH MESH_EVENT and IP_EVENT.
+    // The IP_EVENT branch MUST come first, before the MESH_EVENT-only guard below.
+    if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
+        ESP_LOGI("MESH_EVENT", "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+
+        // Promote the STA netif so outgoing TCP traffic routes through it,
+        // not through the mesh softAP interface.
+        esp_netif_t *sta_netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+        if (sta_netif) {
+            esp_netif_set_default_netif(sta_netif);
+            ESP_LOGI("ROUTING_FIX", "STA promoted as default netif — TCP will now exit via WiFi.");
+        } else {
+            ESP_LOGE("ROUTING_FIX", "Could not find WIFI_STA_DEF netif!");
+        }
+
+        // Small delay to let the IP stack settle before opening a TCP socket
+        vTaskDelay(pdMS_TO_TICKS(500));
+
+        ws_start();
+        return; // done with IP event
+    }
+    // --- 2. MESH EVENTS ---
     if (base != MESH_EVENT) return;
 
     switch (id) {
-    case MESH_EVENT_STARTED:
-        s_mesh_started = true;
-        s_layer = esp_mesh_get_layer();
-        ESP_LOGI(TAG, "mesh started, layer=%d", s_layer);
-        break;
+        case MESH_EVENT_STARTED:
+            s_mesh_started = true;
+            ESP_LOGI(TAG, "Mesh started. Waiting for role assignment...");
+            break;
 
-    case MESH_EVENT_STOPPED:
-        s_mesh_started = false;
-        s_has_parent = false;
-        s_is_root = false;
-        wss_stop();
-        s_rx_task_running = false; 
-        s_layer = -1;
-        ESP_LOGI(TAG, "mesh stopped");
-        break;
-
-    case MESH_EVENT_PARENT_CONNECTED:
-        s_has_parent = true;
-        s_is_root = esp_mesh_is_root();
-        sensor_node.isRoot = s_is_root;
-        
-        if (s_is_root) {
-            // We don't call wss_start() here anymore; we wait for IP_EVENT_STA_GOT_IP
-            ESP_LOGI(TAG, "Root connected to Mesh. Waiting for IP from Router...");
-        }
-        
-        s_layer = esp_mesh_get_layer();
-        ESP_LOGI(TAG, "parent connected, layer=%d, root=%d", s_layer, s_is_root);
-
-        // Start RX task once
-        if (!s_rx_task_running) {
-            if (xTaskCreate(mesh_rx_task, "mesh_rx", 4096, NULL, 5, NULL) == pdPASS) {
-                s_rx_task_running = true;
-                ESP_LOGI(TAG, "mesh_rx task started");
-            } else {
-                ESP_LOGE(TAG, "failed to start mesh_rx task");
+        case MESH_EVENT_PARENT_CONNECTED:
+            s_has_parent = true;
+            s_is_root = esp_mesh_is_root();
+            sensor_node.isRoot = s_is_root;
+            
+            if (s_is_root) {
+                ESP_LOGI(TAG, "Root connected to AP. Manually starting DHCP client...");
+                
+                // This ensures the network stack actually starts looking for an IP
+                esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+                if (netif) {
+                    esp_netif_dhcpc_stop(netif);
+                    esp_netif_dhcpc_start(netif);
+                }
+            } 
+            else {
+                ESP_LOGI(TAG, "I am a Child. Connected to Mesh parent.");
             }
-        }
-        break;
 
-    case MESH_EVENT_PARENT_DISCONNECTED:
-        s_has_parent = false;
-        s_is_root = false;
-        // Kill the WebSocket connection if the Root loses its uplink
-        wss_stop();
-        ESP_LOGW(TAG, "parent disconnected");
-        break;
+            // Start the RX task on every node so they can hear Root commands
+            if (!s_rx_task_running) {
+                if (xTaskCreate(mesh_rx_task, "mesh_rx", 4096, NULL, 5, NULL) == pdPASS) {
+                    s_rx_task_running = true;
+                }
+            }
+            break;
 
-    case MESH_EVENT_LAYER_CHANGE: {
-        mesh_event_layer_change_t *e = (mesh_event_layer_change_t*)event_data;
-        int old = s_layer;
-        s_layer = e->new_layer;
-        ESP_LOGI(TAG, "layer change: %d -> %d", old, s_layer);
-        break;
-    }
+        case MESH_EVENT_PARENT_DISCONNECTED:
+            s_has_parent = false;
+            s_is_root = false;
+            // If the Root loses the AP, or a Child loses the Root, shut down WS
+            ws_stop(); 
+            ESP_LOGW(TAG, "Parent disconnected.");
+            break;
 
-    case MESH_EVENT_CHILD_CONNECTED:
-        ESP_LOGI(TAG, "child connected (total=%d)", esp_mesh_get_total_node_num());
-        break;
+        case MESH_EVENT_STOPPED:
+            s_mesh_started = false;
+            ws_stop();
+            s_rx_task_running = false;
+            break;
 
-    case MESH_EVENT_CHILD_DISCONNECTED:
-        ESP_LOGI(TAG, "child disconnected (total=%d)", esp_mesh_get_total_node_num());
-        break;
+        case MESH_EVENT_VOTE_STARTED:
+            ESP_LOGI(TAG, "Mesh election in progress...");
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 }
 
@@ -356,7 +356,8 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
 static void wifi_mesh_init(void) {
     TRY("esp_netif_init", esp_netif_init());
     TRY("esp_event_loop_create_default", esp_event_loop_create_default());
-    esp_netif_create_default_wifi_mesh_netifs(NULL, NULL);
+
+    esp_netif_create_default_wifi_mesh_netifs(NULL, NULL); 
 
     wifi_init_config_t wcfg = WIFI_INIT_CONFIG_DEFAULT();
     TRY("esp_wifi_init", esp_wifi_init(&wcfg));
@@ -395,9 +396,8 @@ static void wifi_mesh_init(void) {
 
     TRY("esp_wifi_set_ps(NONE)", esp_wifi_set_ps(WIFI_PS_NONE));
 
-    //NEW FOR WS SERVER
-    TRY("register IP_EVENT handler",
-    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &mesh_event_handler, NULL, NULL));
+    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &mesh_event_handler, NULL, NULL);
+
 
     TRY("esp_mesh_start", esp_mesh_start());
     ESP_LOGI(TAG, "mesh starting... using router SSID=\"%.*s\"", mcfg.router.ssid_len, mcfg.router.ssid);
@@ -415,8 +415,14 @@ void app_main(void) {
         nvs_flash_erase();
         nvs_flash_init();
     }
+
+    esp_log_level_set("esp-tls", ESP_LOG_DEBUG);
+    esp_log_level_set("transport_base", ESP_LOG_DEBUG);
+    esp_log_level_set("TRANS_TCP", ESP_LOG_DEBUG);
+
     wifi_mesh_init();
     sensor_node = sensorNode_construct(NODE_TYPE, macStr, esp_mesh_is_root());
-    xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 5, NULL);
-    xTaskCreate(root_polling_task, "root_poll", 4096, NULL, 5, NULL);
+
+    xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 3, NULL);
+    xTaskCreate(root_polling_task, "root_poll", 4096, NULL, 3, NULL);
 }
