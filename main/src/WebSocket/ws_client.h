@@ -17,4 +17,7 @@ bool ws_send(const char *message);
 // Check if we are currently connected to the server
 bool ws_is_connected(void);
 
+//resets server connection if the connection is stuck in loop
+void ws_watchdog(void);
+
 #endif

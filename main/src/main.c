@@ -218,6 +218,7 @@ static void mesh_tx_task(void *arg) {
             if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
                 last_root_poll = now;
                 sensor_node.polled = true;
+                ws_watchdog();
             }
 
             if (sensor_node.polled) {
@@ -226,11 +227,7 @@ static void mesh_tx_task(void *arg) {
                 sensorNode_package_data(&sensor_node);
 
                 ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
-
-                bool sent = ws_send(sensor_node.jsonPayload);
-                if (sent) {
-                    ESP_LOGI("ROOT_WS_CLIENT", "Sent: %s", sensor_node.jsonPayload);
-                }
+                ws_send(sensor_node.jsonPayload);
             }
         }
 

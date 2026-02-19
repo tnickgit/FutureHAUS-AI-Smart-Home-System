@@ -119,3 +119,23 @@ bool ws_is_connected(void) {
     if (!client_handle) return false;
     return esp_websocket_client_is_connected(client_handle);
 }
+
+// Add this to ws_client.c
+void ws_watchdog(void) {
+    if (client_handle == NULL) {
+        // Fully stopped — restart from scratch
+        ESP_LOGW(TAG, "Watchdog: client_handle is NULL, restarting...");
+        ws_start();
+        return;
+    }
+
+    if (!esp_websocket_client_is_connected(client_handle)) {
+        // Handle exists but not connected — stuck state, force restart
+        ESP_LOGW(TAG, "Watchdog: client exists but not connected, force restarting...");
+        esp_websocket_client_stop(client_handle);
+        esp_websocket_client_destroy(client_handle);
+        client_handle = NULL;
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        ws_start();
+    }
+}
