@@ -2,6 +2,7 @@ import json
 import asyncio
 import logging
 import sys
+import ctypes
 from typing import Dict, Any
 
 import websockets
@@ -31,6 +32,22 @@ MOTION = 4
 
 port = 8765
 
+# AI variables and functions
+# ----------------------------------------------------------------------------------------------------------------------
+# TODO: add functions from the c code written meaning replace run_model_json with the name of the function 
+    # remove comments off AI_LIB and delete AI_LIB = 0
+AI_LIB = 0
+# AI_LIB = ctypes.CDLL("./libai_model.so")
+
+# AI_LIB.run_model_json.argtypes = [ctypes.c_char_p]
+# AI_LIB.run_model_json.restype = None
+
+# def call_ai_json(payload: dict):
+#     json_bytes = json.dumps(payload).encode("utf-8")
+#     AI_LIB.run_model_json(json_bytes)
+
+# BROADCASTING FUNCTIONS 
+# ----------------------------------------------------------------------------------------------------------------------
 async def broadcast(obj: dict) -> None:
     if not CLIENTS:
         return
@@ -42,7 +59,6 @@ async def broadcast(obj: dict) -> None:
         if isinstance(r, Exception):
             CLIENTS.pop(node_id, None)
 
-
 def summarize_event(node_id: str, payload: Any) -> dict:
     # payload can be anything; if it's a dict we can check "failed"
     if isinstance(payload, dict) and payload.get("failed") is True:
@@ -51,6 +67,8 @@ def summarize_event(node_id: str, payload: Any) -> dict:
     return {"type": "event", "severity": "info",
             "message": f"data collected from {node_id}: {payload}"}
 
+# HELPER FUNCTIONS 
+# ----------------------------------------------------------------------------------------------------------------------
 
 # This function will place all critical systems data and time it was recives into the database
 def place_data(CS: int, data: Any, time: str) -> None:
@@ -59,15 +77,35 @@ def place_data(CS: int, data: Any, time: str) -> None:
     db_time[CS][index] = time
     index = (index + 1) % columns
 
+def get_root_ws() -> WebSocketServerProtocol | None:
+    if ROOT_ID is None:
+        logger.info("root not connected")
+        return None
 
+    target_ws = CLIENTS.get(ROOT_ID)
+    if not target_ws:
+        logger.info(f"{ROOT_ID} not connected")
+        return None
+
+    return target_ws
+
+# This function is used to send data to the ai model
+async def send_to_ai(src_id, sent_data: Any):
+    try:
+        ai_result = await asyncio.to_thread(call_ai_json, sent_data)
+        logger.info(f"AI result for light {src_id}: {ai_result}")
+    except Exception as e:
+        logger.info(f"AI call failed: {e}")
+
+
+# HANDLERS THAT SEND TO BACK TO THE NODE AND AI
 # ----------------------------------------------------------------------------------------------------------------------
-# Functiosn that need to send data back to the node and AI
 
 # this function is used to send any temperture commands if any change is needed
-# not done need to send to ai
 async def handle_temp_data(src_id, data, time):
     try:
         temp = float(data.get("temperature"))
+        humidity_percent = float(data.get("humidity_percent"))
         set_temp = float(data.get("set_temperature"))
     except (TypeError, ValueError):
         logger.info(f"could not convert the data from {src_id}: {data}")
@@ -76,21 +114,27 @@ async def handle_temp_data(src_id, data, time):
     if not (temp >= 70 or temp <= 62):  # if the temp is not in between cancel
         return
 
-    if ROOT_ID is None:
-        logger.info("root not connected")
-        return
 
-    target_ws = CLIENTS.get(ROOT_ID)
+    target_ws = get_root_ws()
     if not target_ws:
-        logger.info(f"{ROOT_ID} not connected")
         return
 
+
+    # data sent back to the node 
     send_data = {
         "target": src_id,
         "cmd": "SET_TEMP",
         "value": set_temp
     }
+    # node sent to the ai
+    send_data_ai = {
+        "type": "temp_hum",
+        "timestamp": time,
+        "temperature_f": temp,
+        "humidity_percent": humidity_percent
+    }
 
+    # this data is sent back to the microcontroller node
     try:
         logger.info(f"At {time} the temp was {temp} and was set to {set_temp}")
         await target_ws.send(json.dumps(send_data))
@@ -100,16 +144,26 @@ async def handle_temp_data(src_id, data, time):
     except Exception as e:
         logger.info("could not send data")
 
+    # call is to send data to the ai
+    # TODO: add a call to send to the AI module
+        # calls to the ai model on the same board
+    await send_to_ai(src_id, send_data_ai)
+
 # this function handles data from the water sensor and sends it to the AI when the event when using water says stop
-# not done needs to send to ai and log it
 async def handle_light_data(src_id, data, time):
 
     # data that is sent to the AI
     lux_data = data.get("lux")
+    try:
+        lux_value = float(lux_data)
+    except (TypeError, ValueError):
+        logger.info(f"could not convert lux to float from {src_id}: {lux_data}")
+        return
+
     send_data_ai = {
             "type": "light",
             "timestamp": time,
-            "lux": float(lux_data)
+            "lux": float(lux_value)
     }
 
     isOn = data.get("isOn")
@@ -130,12 +184,8 @@ async def handle_light_data(src_id, data, time):
         logger.info(f"light is off")
 
     # data sent back to the client
-    if ROOT_ID is None:
-        logger.info("root not connected")
-        return
-    target_ws = CLIENTS.get(ROOT_ID)
+    target_ws = get_root_ws()
     if not target_ws:
-        logger.info(f"{ROOT_ID} not connected")
         return
 
     try:
@@ -146,44 +196,31 @@ async def handle_light_data(src_id, data, time):
     except Exception as e:
         logger.info("could not send data")
 
-    # data sent to the AI
-    # find to see if AI can send to the AI
-    # send a logger message for if sent
+    # TODO: add a call to send to the AI module
+        # calls to the ai model on the same board
+    await send_to_ai(src_id, send_data_ai)
 
 
+# HANDLERS THAT ONLY SEND BACK TO THE AI
 # ----------------------------------------------------------------------------------------------------------------------
-# Functions that send data to the AI, but not the the node
 
 # This function will gather data from the motion sensor and send to the ai
-# not done needs to send to ai
 async def handle_motion_data(src_id, data, time):
     seconds_since_motion = float(data.get("seconds"))
     type = data.get("type")
 
-    sent_data_ai = {
+    send_data_ai = {
         "type": "type",
         "timestamp": "time",
         "seconds_since_motion": seconds_since_motion
     }
 
-    # send to the ai model
+    # TODO: add a call to send to the AI module
+        # calls to the ai model on the same board
+    await send_to_ai(src_id, send_data_ai)
 
 # This function will handle data from water sensor and send over to AI
-# not done needs to send to ai
 async def handle_water_data(node_type, src_id, data, time):
-
-    # Data recieved from client
-    # water
-    # {
-    #   "SRC_ID": "SRC_ID",
-    #   "NODE_TYPE": "light",
-    #   "timestamp": "timestamp",
-    #   "data": {
-    #       "fixure": "fixure",
-    #       "event": "event",
-    #       "amount": "amount"
-    #   }
-    # }
 
     #for water data, data is going to have multiple sub catagories
     fixure = data.get("fixure")
@@ -197,7 +234,7 @@ async def handle_water_data(node_type, src_id, data, time):
         logger.info(f"Water is running from {fixure}")
 
     # make json file for what to send the AI
-    AI_Json_data = {
+    send_data_ai = {
         "type": "water_event",
         "timestamp": time,
         "fixture": fixure,
@@ -206,12 +243,13 @@ async def handle_water_data(node_type, src_id, data, time):
     }
 
 
-    # do try statements for the AI connection
-    # send the data to the AI and make sure to put logger info
+    # TODO: add a call to send to the AI module
+       # calls to the ai model on the same board
+    await send_to_ai(src_id, send_data_ai)
+    
 
 # this functions needs to gather data from the sensor and arrage the JSON file recieved and place it into a JSON
 # file that is sent to the AI
-#not done needs to send to ai
 async def handle_electric_data(src_id, data, time):
     usage = data.get("usage")
     type = data.get("type")
@@ -222,8 +260,13 @@ async def handle_electric_data(src_id, data, time):
         "usage": usage
     }
 
-    # send the data to the ai
+    # TODO: add a call to send to the AI module
+        # calls to the ai model on the same board
+    await send_to_ai(src_id, send_data_ai)
 
+
+# MAIN WEBSOCKET DATA MANAGEMENT
+# ----------------------------------------------------------------------------------------------------------------------
 
 # this function will interpret the JSON file and then place the data accordingly using place data function
 async def handle_sensor_data(msg: dict) -> None:
