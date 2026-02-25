@@ -17,7 +17,7 @@ STATE_LOCK = asyncio.Lock()
 ROOT_WS: WebSocketServerProtocol | None = None
 ROOT_ID: str | None = None
 
-rows = 4
+rows = 5
 columns = 100
 database = [[0 for _ in range(columns)] for _ in range(rows)]
 db_time = [[0 for _ in range(columns)] for _ in range(rows)]
@@ -27,8 +27,10 @@ ELEC = 3
 WATER = 0
 HVAC = 2
 LIGHT = 1
+MOTION = 4
 
-WS_PORT = 8765
+port = 8765
+
 async def broadcast(obj: dict) -> None:
     if not CLIENTS:
         return
@@ -40,6 +42,7 @@ async def broadcast(obj: dict) -> None:
         if isinstance(r, Exception):
             CLIENTS.pop(node_id, None)
 
+
 def summarize_event(node_id: str, payload: Any) -> dict:
     # payload can be anything; if it's a dict we can check "failed"
     if isinstance(payload, dict) and payload.get("failed") is True:
@@ -48,6 +51,7 @@ def summarize_event(node_id: str, payload: Any) -> dict:
     return {"type": "event", "severity": "info",
             "message": f"data collected from {node_id}: {payload}"}
 
+
 # This function will place all critical systems data and time it was recives into the database
 def place_data(CS: int, data: Any, time: str) -> None:
     global index
@@ -55,15 +59,21 @@ def place_data(CS: int, data: Any, time: str) -> None:
     db_time[CS][index] = time
     index = (index + 1) % columns
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Functiosn that need to send data back to the node and AI
+
 # this function is used to send any temperture commands if any change is needed
-async def handle_temp_data(src_id, data):
+# not done need to send to ai
+async def handle_temp_data(src_id, data, time):
     try:
-        temp = float(data)
+        temp = float(data.get("temperature"))
+        set_temp = float(data.get("set_temperature"))
     except (TypeError, ValueError):
         logger.info(f"could not convert the data from {src_id}: {data}")
         return
 
-    if not (temp >= 70 or temp <= 62): #if the temp is not in between cancel
+    if not (temp >= 70 or temp <= 62):  # if the temp is not in between cancel
         return
 
     if ROOT_ID is None:
@@ -78,17 +88,142 @@ async def handle_temp_data(src_id, data):
     send_data = {
         "target": src_id,
         "cmd": "SET_TEMP",
-        "value": 65
+        "value": set_temp
     }
 
     try:
-        logger.info(f"sending over the data: {send_data}")
+        logger.info(f"At {time} the temp was {temp} and was set to {set_temp}")
         await target_ws.send(json.dumps(send_data))
     except ConnectionClosed:
         logger.info(f"{src_id} connection has disconnected")
-        CLIENTS.pop(src_id, None);
+        CLIENTS.pop(src_id, None)
     except Exception as e:
         logger.info("could not send data")
+
+# this function handles data from the water sensor and sends it to the AI when the event when using water says stop
+# not done needs to send to ai and log it
+async def handle_light_data(src_id, data, time):
+
+    # data that is sent to the AI
+    lux_data = data.get("lux")
+    send_data_ai = {
+            "type": "light",
+            "timestamp": time,
+            "lux": float(lux_data)
+    }
+
+    isOn = data.get("isOn")
+    send_data_client = {}
+    if (isOn == True):
+        send_data_client = {
+            "target": src_id,
+            "cmd": "LIGHT_ON",
+            "value": isOn
+        }
+        logger.info(f"Light is on and brightness is set to {lux_data}")
+    else:
+        send_data_client = {
+            "target": src_id,
+            "cmd": "LIGHT_OFF",
+            "value": isOn
+        }
+        logger.info(f"light is off")
+
+    # data sent back to the client
+    if ROOT_ID is None:
+        logger.info("root not connected")
+        return
+    target_ws = CLIENTS.get(ROOT_ID)
+    if not target_ws:
+        logger.info(f"{ROOT_ID} not connected")
+        return
+
+    try:
+        await target_ws.send(json.dumps(send_data_client))
+    except ConnectionClosed:
+        logger.info(f"{src_id} connection has disconnected")
+        CLIENTS.pop(src_id, None)
+    except Exception as e:
+        logger.info("could not send data")
+
+    # data sent to the AI
+    # find to see if AI can send to the AI
+    # send a logger message for if sent
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Functions that send data to the AI, but not the the node
+
+# This function will gather data from the motion sensor and send to the ai
+# not done needs to send to ai
+async def handle_motion_data(src_id, data, time):
+    seconds_since_motion = float(data.get("seconds"))
+    type = data.get("type")
+
+    sent_data_ai = {
+        "type": "type",
+        "timestamp": "time",
+        "seconds_since_motion": seconds_since_motion
+    }
+
+    # send to the ai model
+
+# This function will handle data from water sensor and send over to AI
+# not done needs to send to ai
+async def handle_water_data(node_type, src_id, data, time):
+
+    # Data recieved from client
+    # water
+    # {
+    #   "SRC_ID": "SRC_ID",
+    #   "NODE_TYPE": "light",
+    #   "timestamp": "timestamp",
+    #   "data": {
+    #       "fixure": "fixure",
+    #       "event": "event",
+    #       "amount": "amount"
+    #   }
+    # }
+
+    #for water data, data is going to have multiple sub catagories
+    fixure = data.get("fixure")
+    amount = data.get("amount")
+    event = data.get("event")
+
+    if event == "stop":
+        logger.info("Water has stopped running. Used {amount} gal/s")
+        place_data(node_type, data, time) # put data in database
+    elif event == "start":
+        logger.info(f"Water is running from {fixure}")
+
+    # make json file for what to send the AI
+    AI_Json_data = {
+        "type": "water_event",
+        "timestamp": time,
+        "fixture": fixure,
+        "event": event,
+        "total_gallons": float(amount)
+    }
+
+
+    # do try statements for the AI connection
+    # send the data to the AI and make sure to put logger info
+
+# this functions needs to gather data from the sensor and arrage the JSON file recieved and place it into a JSON
+# file that is sent to the AI
+#not done needs to send to ai
+async def handle_electric_data(src_id, data, time):
+    usage = data.get("usage")
+    type = data.get("type")
+
+    send_data_ai = {
+        "type": type,
+        "timestamp": time,
+        "usage": usage
+    }
+
+    # send the data to the ai
+
 
 # this function will interpret the JSON file and then place the data accordingly using place data function
 async def handle_sensor_data(msg: dict) -> None:
@@ -98,14 +233,28 @@ async def handle_sensor_data(msg: dict) -> None:
     DATA = msg.get("data")
 
     if NODE_TYPE == ELEC:
+        logger.info(f"Electricity: Recieved Data")
+        await handle_electric_data(SRC_ID, DATA, TIMESTAMP)
         place_data(ELEC, DATA, TIMESTAMP)
+
     elif NODE_TYPE == WATER:
-        place_data(WATER, DATA, TIMESTAMP)
+        logger.info(f"Water: Recieved Data")
+        await handle_water_data(NODE_TYPE, SRC_ID, DATA, TIMESTAMP)
+
     elif NODE_TYPE == HVAC:
+        logger.info(f"Temp: Recieved Data")
         place_data(HVAC, DATA, TIMESTAMP)
-        await handle_temp_data(SRC_ID, DATA)
+        await handle_temp_data(SRC_ID, DATA, TIMESTAMP)
+
     elif NODE_TYPE == LIGHT:
+        logger.info(f"Light: Recieved Data")
         place_data(LIGHT, DATA, TIMESTAMP)
+        await handle_light_data(SRC_ID, DATA, TIMESTAMP)
+
+    elif NODE_TYPE == MOTION:
+        logger.info(f"Motion Detected")
+        await handle_motion_data(SRC_ID, DATA, TIMESTAMP)
+        place_data(MOTION, DATA, TIMESTAMP)
 
     async with STATE_LOCK:
         STATE.setdefault(SRC_ID, {})
@@ -113,96 +262,23 @@ async def handle_sensor_data(msg: dict) -> None:
 
     # await broadcast(summarize_event(SRC_ID, DATA))
 
-# this function is used to handle any control commands such as HVAC and lightings using the JSON file
-async def handle_control_node(ws: WebSocketServerProtocol, msg: dict) -> None:
-    SRC_ID = msg.get("src_id")
-    TARGET_ID = msg.get("target")
-    CMD = msg.get("cmd")
-    VALUE = msg.get("value")
-    TIMESTAMP = msg.get("timestamp")
-
-    target_ws = CLIENTS.get(TARGET_ID)
-    if not target_ws:
-        await ws.send(json.dumps({"type": "error", "error": "target_not_connected", "target": TARGET_ID}))
-        return
-
-    command_msg = {
-        "type": "Control_Node",
-        "src_id": SRC_ID,
-        "target": TARGET_ID,
-        "cmd": CMD,
-        "value": VALUE,
-        "timestamp": TIMESTAMP,
-    }
-
-    await target_ws.send(json.dumps(command_msg))
-
-    data_sent = f"{TIMESTAMP} {CMD} {VALUE}"
-    await broadcast(summarize_event(TARGET_ID, data_sent))
-
-async def handle_WSS_command(ws: WebSocketServerProtocol, msg: dict) -> None:
-    global ROOT_WS
-
-    TARGET_ID = msg.get("target")
-    CMD = msg.get("cmd")
-    VALUE = msg.get("value")
-    TIME = msg.get("timestamp")
-
-    if ROOT_WS is None:
-        await ws.send(json.dumps({"type": "error", "error": "root_not_connected", "target": TARGET_ID}))
-        return
-
-    # forward WSS command to root (includes target so root can route)
-    command_msg_to_root = {
-        "type": "WSS_Command",
-        "target": TARGET_ID,
-        "cmd": CMD,
-        "value": VALUE,
-        "timestamp": TIME
-    }
-
-    await ROOT_WS.send(json.dumps(command_msg_to_root))
-    await ws.send(json.dumps({"type": "ack", "status": "sent_to_root", "target": TARGET_ID}))
-
-async def handle_root_command(ws: WebSocketServerProtocol, msg: dict) -> None:
-    # message coming FROM root back to server (ack/status/events)
-    CMD = msg.get("cmd")
-    VALUE = msg.get("value")
-    TIME = msg.get("timestamp")
-
-    event_msg = {
-        "type": "event",
-        "source": "root",
-        "cmd": CMD,
-        "value": VALUE,
-        "timestamp": TIME
-    }
-    await broadcast(event_msg)
 
 async def handle_message(ws: WebSocketServerProtocol, msg: dict) -> None:
     mtype = msg.get("node_type")
     # await handle_sensor_data(msg)
     if mtype == "SENSOR":
         await handle_sensor_data(msg)
-    # elif mtype == "Control_Node":
-    #     await handle_control_node(ws, msg)
-    # elif mtype == "WSS_Command":
-    #     await handle_WSS_command(ws, msg)
-    # elif mtype == "Root_Command":
-    #     await handle_root_command(ws, msg)
-    # else:
-    #     logger.info("handle_message error here")
-    #     await ws.send(json.dumps({"type": "error", "error": "unknown_message_type"}))
+
 
 async def handler(ws: WebSocketServerProtocol) -> None:
     global ROOT_WS, ROOT_ID
-    print("new websocket client has arrived")
+    logger.info("A new client has joined")
     node_id: str | None = None
 
     try:
         async for raw in ws:
             try:
-                msg = json.loads(raw) #get the data from the json file sent by the root
+                msg = json.loads(raw)  # get the data from the json file sent by the root
             except json.JSONDecodeError:
                 logger.info("the error is in json.JSONDecodeError")
                 await ws.send(json.dumps({"type": "error", "message": "invalid JSON"}))
@@ -236,12 +312,13 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             ROOT_WS = None
             ROOT_ID = None
 
+
 async def main():
     # run the websocket server using the handler function on ip 0.0.0.0 and the port 8765
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-    async with websockets.serve(handler, "0.0.0.0", 8765):
-        print("Running on ws://0.0.0.0:8765")
+    async with websockets.serve(handler, host="0.0.0.0", port=port):
         await asyncio.Future()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
