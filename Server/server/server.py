@@ -4,6 +4,7 @@ import logging
 import sys
 import ctypes
 from typing import Dict, Any
+from logging.handlers import RotatingFileHandler
 
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
@@ -19,7 +20,7 @@ ROOT_WS: WebSocketServerProtocol | None = None
 ROOT_ID: str | None = None
 
 rows = 5
-columns = 100
+columns = 1000
 database = [[0 for _ in range(columns)] for _ in range(rows)]
 db_time = [[0 for _ in range(columns)] for _ in range(rows)]
 index = 0
@@ -37,6 +38,7 @@ port = 8765
 # TODO: add functions from the c code written meaning replace run_model_json with the name of the function 
     # remove comments off AI_LIB and delete AI_LIB = 0
 AI_LIB = 0
+# make sure that when you run on the raspberry pi you do this gcc -shared -fPIC ai_model.c -o libai_model.so
 # AI_LIB = ctypes.CDLL("./libai_model.so")
 
 # AI_LIB.run_model_json.argtypes = [ctypes.c_char_p]
@@ -147,7 +149,7 @@ async def handle_temp_data(src_id, data, time):
     # call is to send data to the ai
     # TODO: add a call to send to the AI module
         # calls to the ai model on the same board
-    await send_to_ai(src_id, send_data_ai)
+    # await send_to_ai(src_id, send_data_ai)
 
 # this function handles data from the water sensor and sends it to the AI when the event when using water says stop
 async def handle_light_data(src_id, data, time):
@@ -198,7 +200,7 @@ async def handle_light_data(src_id, data, time):
 
     # TODO: add a call to send to the AI module
         # calls to the ai model on the same board
-    await send_to_ai(src_id, send_data_ai)
+    # await send_to_ai(src_id, send_data_ai)
 
 
 # HANDLERS THAT ONLY SEND BACK TO THE AI
@@ -217,7 +219,7 @@ async def handle_motion_data(src_id, data, time):
 
     # TODO: add a call to send to the AI module
         # calls to the ai model on the same board
-    await send_to_ai(src_id, send_data_ai)
+    # await send_to_ai(src_id, send_data_ai)
 
 # This function will handle data from water sensor and send over to AI
 async def handle_water_data(node_type, src_id, data, time):
@@ -245,7 +247,7 @@ async def handle_water_data(node_type, src_id, data, time):
 
     # TODO: add a call to send to the AI module
        # calls to the ai model on the same board
-    await send_to_ai(src_id, send_data_ai)
+    # await send_to_ai(src_id, send_data_ai)
     
 
 # this functions needs to gather data from the sensor and arrage the JSON file recieved and place it into a JSON
@@ -262,7 +264,7 @@ async def handle_electric_data(src_id, data, time):
 
     # TODO: add a call to send to the AI module
         # calls to the ai model on the same board
-    await send_to_ai(src_id, send_data_ai)
+    # await send_to_ai(src_id, send_data_ai)
 
 
 # MAIN WEBSOCKET DATA MANAGEMENT
@@ -356,9 +358,42 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             ROOT_ID = None
 
 
+def setup_logging():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # prevent duplicate handlers
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    # formatter
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+    )
+
+    # console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+
+    # file handler
+    file_handler = RotatingFileHandler(
+        "server.log",
+        maxBytes=5_000_000,  # 5 MB
+        backupCount=3
+    )
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+
+    # attach handlers
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+
 async def main():
     # run the websocket server using the handler function on ip 0.0.0.0 and the port 8765
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    # logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    setup_logging()
     async with websockets.serve(handler, host="0.0.0.0", port=port):
         await asyncio.Future()
 
