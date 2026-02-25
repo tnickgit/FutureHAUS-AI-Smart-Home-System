@@ -9,6 +9,7 @@ sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot)
     sn.data = 0;
     // payload is empty at start
     snprintf(sn.jsonPayload, PAYLOAD_SIZE, "{}");
+    snprintf(sn.data_string, PAYLOAD_SIZE/2, " ");
     return sn;
 }
 
@@ -26,6 +27,15 @@ void sensorNode_get_data(sensorNode *sn) {
                 sn->ts = temperatureSense_construct();
                 sn->data = sn->ts.sensedTemperature;
                 break;
+            case SENSOR_TYPE_LIGHT:
+                sn->ls = lightSense_construct();
+                sn->data = sn->ls.sensedLux;
+                break;
+            case SENSOR_TYPE_MOTION:
+                sn->ms = motionSense_construct();
+                sn->data = sn->ms.sensedMotion;
+                break;
+            case SENSOR_TYPE_POWER:
             default:
                 //ESP_LOGW("DEFAULT_NO_TYPE");
                 break;
@@ -41,6 +51,10 @@ void sensorNode_get_data(sensorNode *sn) {
                 determineTemperatureLevel(&sn->ts);
                 sn->data = sn->ts.sensedTemperature;
                 break;
+            case SENSOR_TYPE_LIGHT:
+                determineLuxLevel(&sn->ls);
+                sn->data = sn->ls.sensedLux;
+                break;
             default:
                 //ESP_LOGW("DEFAULT_NO_TYPE");
                 break;
@@ -53,14 +67,34 @@ void sensorNode_package_data(sensorNode *sn) {
     // esp_timer_get_time returns microseconds; divide by 1000 for ms
     int64_t uptime_ms = esp_timer_get_time() / 1000;
 
+    switch(sn->type){
+        case SENSOR_TYPE_WATER:
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"water\", \"fixture\":\"shower\", \"event\":\"stop\",\"total_gallons\":%f", sn->data); 
+            break;
+        case SENSOR_TYPE_TEMP:
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"temp_hum\", \"temp_f\":%f,\"humidity_percent\":%f", sn->data, sn->ts.sensedHumidity); 
+            break;
+        case SENSOR_TYPE_LIGHT:
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"lux\", \"lux\":%f, \"isOn\":%s", sn->data, sn->ls.isOn ? "true" : "false"); 
+            break;
+        case SENSOR_TYPE_MOTION:
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"motion\", \"seconds_since_motion\":%f", sn->data); 
+            break;
+        default:
+            break;
+    }
+
+
     snprintf(sn->jsonPayload, PAYLOAD_SIZE, 
-             "{\"src_id\": \"%s\", \"mode\":\"SEND_DATA\",\"node_type\": \"SENSOR\", \"sensor_type\": %d, \"data\": \"%f\", \"isRoot\": %s, \"timestamp\": %lld}", 
+             "{\"src_id\": \"%s\", \"mode\":\"SEND_DATA\",\"node_type\": \"SENSOR\", \"sensor_type\": %d, \"data\": {%s}, \"isRoot\": %s, \"timestamp\": %lld}", 
              sn->nodeID, 
              sn->type, 
-             sn->data,
+             sn->data_string,
              sn->isRoot ? "true" : "false",
              uptime_ms);
 }
+//	{"src_id":"__MAC_ADDR__", "node_type":"__NODE_TYPE__", "sensor_type": "__SENSOR TYPE__", "mode":"__MANUAL OR AUTO__, "data":"__data__","isRoot":"__BOOL__", "timestamp":"__TIMESTAMP__"}
+
 
 bool process_json_data(sensorNode *sn, char* jsonData) {
     if (jsonData == NULL) return false;
