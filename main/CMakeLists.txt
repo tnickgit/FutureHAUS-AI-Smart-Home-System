@@ -1,2 +1,2 @@
-idf_component_register(SRCS "src/sensors/sensorNode.c" "src/main.c" "src/sensors/waterSense.c" "src/sensors/temperatureSense.c" "src/WebSocket/ws_client.c"
+idf_component_register(SRCS "src/sensors/sensorNode.c" "src/main.c" "src/sensors/waterSense.c" "src/sensors/temperatureSense.c" "src/sensors/motionSense.c" "src/sensors/lightSense.c" "src/WebSocket/ws_client.c"
                     INCLUDE_DIRS ".")

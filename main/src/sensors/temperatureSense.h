@@ -12,7 +12,7 @@
 // Define the struct with leading underscore
 struct _temperatureSense {
     float sensedTemperature;          // random temperature value
-    char determination[TEMP_LIMIT];   // message string
+    float sensedHumidity;
 };
 
 typedef struct _temperatureSense temperatureSense;

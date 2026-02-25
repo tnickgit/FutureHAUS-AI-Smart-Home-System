@@ -3,12 +3,14 @@
 
 #include "waterSense.h"
 #include "temperatureSense.h"
+#include "lightSense.h"
+#include "motionSense.h"
 #include "esp_timer.h"
 #include "cJSON.h"
 #include "esp_log.h"
 
 
-#define PAYLOAD_SIZE 256  // Enough for standard JSON messages
+#define PAYLOAD_SIZE 512  // Enough for standard JSON messages
 #define MAC_STR_SIZE 18
 
 //possible sensor types
@@ -16,7 +18,8 @@ enum SensorType {
     SENSOR_TYPE_WATER,
     SENSOR_TYPE_LIGHT,
     SENSOR_TYPE_TEMP,
-    SENSOR_TYPE_POWER
+    SENSOR_TYPE_POWER,
+    SENSOR_TYPE_MOTION
 };
 
 // containers truct for sensor node
@@ -30,11 +33,14 @@ struct _sensorNode{
     float data;
     bool polled;
     char jsonPayload[PAYLOAD_SIZE]; // The final message ready for shipping
+    char data_string[PAYLOAD_SIZE/2];
 
     //handling specific sensor types
     bool constructed;
     temperatureSense ts;
     waterSense ws;
+    lightSense ls;
+    motionSense ms;
 };
 
 typedef struct _sensorNode sensorNode;

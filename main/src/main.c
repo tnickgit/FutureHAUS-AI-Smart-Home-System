@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_TEMP   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_LIGHT   //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -73,7 +73,7 @@ static esp_err_t TRY(const char *what, esp_err_t err) {
 }
 
 // for ROOT to have a node table, will be on WSS eventually
-void update_node_table(char* id_str, mesh_addr_t *raw_mac) {
+void update_node_table(char* id_str, mesh_addr_t *raw_mac, enum SensorType st) {
     // 1. Check if exists
     for (int i = 0; i < node_count; i++) {
         if (strncmp(node_table[i].id, id_str, MAC_STR_SIZE) == 0) {
@@ -86,8 +86,9 @@ void update_node_table(char* id_str, mesh_addr_t *raw_mac) {
         strncpy(node_table[node_count].id, id_str, MAC_STR_SIZE);
         node_table[node_count].mac_addr = *raw_mac;
         node_table[node_count].active = true;
+        node_table[node_count].sensor_type = st;
         node_count++;
-        ESP_LOGI(TAG, "New node in mesh, ID: %s (Total: %d)", id_str, node_count);
+        ESP_LOGI(TAG, "New node in mesh, ID: %s, type: %d, (Total: %d)", id_str, st, node_count);
     }
 }
 
@@ -167,8 +168,9 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     cJSON *root = cJSON_Parse((char *)payload);
     if (root) {
         cJSON *id_item = cJSON_GetObjectItem(root, "src_id");
-        if (cJSON_IsString(id_item) && (id_item->valuestring != NULL)) {
-            update_node_table(id_item->valuestring, from);
+        cJSON *type = cJSON_GetObjectItem(root, "sensor_type");
+        if ((cJSON_IsString(id_item) && (id_item->valuestring != NULL)) && (cJSON_IsNumber(type))) {
+            update_node_table(id_item->valuestring, from, type->valueint);
         }
         cJSON_Delete(root);
     } else {
@@ -210,10 +212,12 @@ static void mesh_tx_task(void *arg) {
             if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
                 last_root_poll = now;
                 sensor_node.polled = true;
+                //check for timeout manually since the event handler is busted or something
                 ws_watchdog();
             }
 
             if (sensor_node.polled) {
+                //reset poll and send to ws server
                 sensor_node.polled = false;
                 sensorNode_get_data(&sensor_node);
                 sensorNode_package_data(&sensor_node);
@@ -229,6 +233,7 @@ static void mesh_tx_task(void *arg) {
 
 /************* events *************/
 static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, void *event_data) {
+
     // NOTE: This handler is registered for BOTH MESH_EVENT and IP_EVENT.
     // The IP_EVENT branch MUST come first, before the MESH_EVENT-only guard below.
     if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
@@ -251,7 +256,7 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         return; // done with IP event
     }
 
-    // --- 2. MESH EVENTS ---
+    // MESH EVENTS
     if (base != MESH_EVENT) return;
 
     switch (id) {

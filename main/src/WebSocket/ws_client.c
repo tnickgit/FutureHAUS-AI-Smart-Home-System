@@ -10,10 +10,6 @@ extern sensorNode sensor_node; // Declared in main.c
 static const char *TAG = "WS_CLIENT";
 static esp_websocket_client_handle_t client_handle = NULL;
 
-
-// --- CONFIGURATION ---
-// Note: For real production WSS, you usually need to provide .cert_pem
-
 // --- INTERNAL EVENT HANDLER ---
 static void websocket_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_websocket_event_data_t *data = (esp_websocket_event_data_t *)event_data;
@@ -80,7 +76,7 @@ void ws_start(void) {
 
     const esp_websocket_client_config_t local_cfg = {
         //CHANGE URI BASED ON SERVER 
-        .uri = "ws://192.168.1.215:8765",
+        .uri = "ws://192.168.1.42:8765",
         .network_timeout_ms = 5000,      // Increase to 30s
         .buffer_size = 2048,              // Double the buffer for mesh overhead
         .reconnect_timeout_ms = 10000
