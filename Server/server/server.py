@@ -2,9 +2,9 @@ import json
 import asyncio
 import logging
 import sys
-import ctypes
 from typing import Dict, Any
 from logging.handlers import RotatingFileHandler
+# from ai import process_sensor_data
 
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
@@ -32,21 +32,6 @@ LIGHT = 1
 MOTION = 4
 
 port = 8765
-
-# AI variables and functions
-# ----------------------------------------------------------------------------------------------------------------------
-# TODO: add functions from the c code written meaning replace run_model_json with the name of the function 
-    # remove comments off AI_LIB and delete AI_LIB = 0
-AI_LIB = 0
-# make sure that when you run on the raspberry pi you do this gcc -shared -fPIC ai_model.c -o libai_model.so
-# AI_LIB = ctypes.CDLL("./libai_model.so")
-
-# AI_LIB.run_model_json.argtypes = [ctypes.c_char_p]
-# AI_LIB.run_model_json.restype = None
-
-# def call_ai_json(payload: dict):
-#     json_bytes = json.dumps(payload).encode("utf-8")
-#     AI_LIB.run_model_json(json_bytes)
 
 # BROADCASTING FUNCTIONS 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -79,6 +64,7 @@ def place_data(CS: int, data: Any, time: str) -> None:
     db_time[CS][index] = time
     index = (index + 1) % columns
 
+
 def get_root_ws() -> WebSocketServerProtocol | None:
     if ROOT_ID is None:
         logger.info("root not connected")
@@ -91,14 +77,9 @@ def get_root_ws() -> WebSocketServerProtocol | None:
 
     return target_ws
 
-# This function is used to send data to the ai model
-async def send_to_ai(src_id, sent_data: Any):
-    try:
-        ai_result = await asyncio.to_thread(call_ai_json, sent_data)
-        logger.info(f"AI result for light {src_id}: {ai_result}")
-    except Exception as e:
-        logger.info(f"AI call failed: {e}")
-
+def give_data_to_ai(data: dict):
+    result = process_sensor_data(data)
+    logger.info(f"Data has been sent to AI and produced {result}")
 
 # HANDLERS THAT SEND TO BACK TO THE NODE AND AI
 # ----------------------------------------------------------------------------------------------------------------------
@@ -146,10 +127,8 @@ async def handle_temp_data(src_id, data, time):
     except Exception as e:
         logger.info("could not send data")
 
-    # call is to send data to the ai
-    # TODO: add a call to send to the AI module
-        # calls to the ai model on the same board
-    # await send_to_ai(src_id, send_data_ai)
+    # this sends the data to the ai model and logs what happens
+    give_data_to_ai(send_data_ai)
 
 # this function handles data from the water sensor and sends it to the AI when the event when using water says stop
 async def handle_light_data(src_id, data, time):
@@ -198,9 +177,8 @@ async def handle_light_data(src_id, data, time):
     except Exception as e:
         logger.info("could not send data")
 
-    # TODO: add a call to send to the AI module
-        # calls to the ai model on the same board
-    # await send_to_ai(src_id, send_data_ai)
+    # this sends the data to the ai model and logs what happens
+    give_data_to_ai(send_data_ai)
 
 
 # HANDLERS THAT ONLY SEND BACK TO THE AI
@@ -217,9 +195,8 @@ async def handle_motion_data(src_id, data, time):
         "seconds_since_motion": seconds_since_motion
     }
 
-    # TODO: add a call to send to the AI module
-        # calls to the ai model on the same board
-    # await send_to_ai(src_id, send_data_ai)
+    # this sends the data to the ai model and logs what happens
+    give_data_to_ai(send_data_ai)
 
 # This function will handle data from water sensor and send over to AI
 async def handle_water_data(node_type, src_id, data, time):
@@ -245,9 +222,8 @@ async def handle_water_data(node_type, src_id, data, time):
     }
 
 
-    # TODO: add a call to send to the AI module
-       # calls to the ai model on the same board
-    # await send_to_ai(src_id, send_data_ai)
+    # this sends the data to the ai model and logs what happens
+    give_data_to_ai(send_data_ai)
     
 
 # this functions needs to gather data from the sensor and arrage the JSON file recieved and place it into a JSON
@@ -262,9 +238,8 @@ async def handle_electric_data(src_id, data, time):
         "usage": usage
     }
 
-    # TODO: add a call to send to the AI module
-        # calls to the ai model on the same board
-    # await send_to_ai(src_id, send_data_ai)
+    # this sends the data to the ai model and logs what happens
+    give_data_to_ai(send_data_ai)
 
 
 # MAIN WEBSOCKET DATA MANAGEMENT
