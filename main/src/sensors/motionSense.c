@@ -6,12 +6,20 @@ motionSense motionSense_construct(void)
     motionSense ms;          // local variable
     ms.sensedMotion = 0.0f;
     ms.lastMotion = 0;
+    ms.isMotionSensed = false;
     return ms;                    // returned by value to caller
 }
 
 void determineMotion(motionSense *ms)
 {
     // temperature in fahrenheit with 1 decimal place
-    ms->lastMotion = esp_timer_get_time() / 1000;
+    float rand_value = ((float)(rand() %1001));
+    if(rand_value > 700){
+        ms->lastMotion = esp_timer_get_time() / 1000;
+        ms->isMotionSensed = true;
+    }
+    else{
+        ms->isMotionSensed = false;
+    }
     ms->sensedMotion = esp_timer_get_time() / 1000 - ms->lastMotion;
 }

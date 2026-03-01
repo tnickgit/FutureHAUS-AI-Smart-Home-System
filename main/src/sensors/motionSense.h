@@ -13,6 +13,7 @@
 struct _motionSense {
     float sensedMotion;          // random temperature value
     int lastMotion;
+    bool isMotionSensed;
 };
 
 typedef struct _motionSense motionSense;

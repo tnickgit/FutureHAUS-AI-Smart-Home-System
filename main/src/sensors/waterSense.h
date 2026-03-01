@@ -7,13 +7,12 @@
 #include <string.h>
 #include "esp_system.h"
 
-#define limit 500
-
 // Define the struct with leading underscore
 struct _waterSense {
     int sensedNumber;          // random number generated
     int totalNumber;
-    char determination[limit];   // message string
+
+    char* fixture;
 };
 
 typedef struct _waterSense waterSense;

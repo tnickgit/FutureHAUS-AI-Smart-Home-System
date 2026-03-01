@@ -28,7 +28,8 @@ void sensorNode_get_data(sensorNode *sn) {
                 sn->data = sn->ts.sensedTemperature;
                 break;
             case SENSOR_TYPE_LIGHT:
-                sn->ls = lightSense_construct();
+                lightSense_init(&sn->ls);
+                determineLuxLevel(&sn->ls);
                 sn->data = sn->ls.sensedLux;
                 break;
             case SENSOR_TYPE_MOTION:
@@ -45,7 +46,7 @@ void sensorNode_get_data(sensorNode *sn) {
         switch(sn->type) {
             case SENSOR_TYPE_WATER:
                 determineWaterLevel(&sn->ws);
-                sn->data = sn->ws.totalNumber;
+                sn->data = sn->ws.sensedNumber;
                 break;
             case SENSOR_TYPE_TEMP:
                 determineTemperatureLevel(&sn->ts);
@@ -54,6 +55,10 @@ void sensorNode_get_data(sensorNode *sn) {
             case SENSOR_TYPE_LIGHT:
                 determineLuxLevel(&sn->ls);
                 sn->data = sn->ls.sensedLux;
+                break;
+            case SENSOR_TYPE_MOTION:
+                determineMotion(&sn->ms);
+                sn->data = sn->ms.isMotionSensed;
                 break;
             default:
                 //ESP_LOGW("DEFAULT_NO_TYPE");
@@ -69,16 +74,16 @@ void sensorNode_package_data(sensorNode *sn) {
 
     switch(sn->type){
         case SENSOR_TYPE_WATER:
-            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"water\", \"fixture\":\"shower\", \"event\":\"stop\",\"total_gallons\":%f", sn->data); 
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"water\", \"fixture\":\"%s\", \"curr_usage\":%f", sn->ws.fixture, sn->data); 
             break;
         case SENSOR_TYPE_TEMP:
             snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"temp_hum\", \"temp_f\":%f,\"humidity_percent\":%f", sn->data, sn->ts.sensedHumidity); 
             break;
         case SENSOR_TYPE_LIGHT:
-            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"lux\", \"lux\":%f, \"isOn\":%s", sn->data, sn->ls.isOn ? "true" : "false"); 
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"lux\", \"lux\":%f, \"isOn\":%s", ((3.3 - sn->data) / 3.3) * 100, sn->ls.isOn ? "true" : "false"); 
             break;
         case SENSOR_TYPE_MOTION:
-            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"motion\", \"seconds_since_motion\":%f", sn->data); 
+            snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"motion\", \"is_motion\":\"%s\"", sn->ms.isMotionSensed ? "true" : "false"); 
             break;
         default:
             break;

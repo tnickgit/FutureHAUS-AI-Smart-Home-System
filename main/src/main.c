@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_LIGHT   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_LIGHT //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -183,7 +183,28 @@ static void mesh_tx_task(void *arg) {
 
     for (;;) {
         //CHILD NODES
-        if (s_mesh_started && s_has_parent && !s_is_root) {
+        if (s_is_root && s_mesh_started) {
+            //self poll 10s
+            TickType_t now = xTaskGetTickCount();
+            if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
+                last_root_poll = now;
+                sensor_node.polled = true;
+                //check for timeout manually since the event handler is busted or something
+                ws_watchdog();
+            }
+
+            if (sensor_node.polled) {
+                //reset poll and send to ws server
+                sensor_node.polled = false;
+                sensorNode_get_data(&sensor_node);
+                sensorNode_package_data(&sensor_node);
+
+                ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
+                ws_send(sensor_node.jsonPayload);
+            }
+        }
+        //ROOT NODE
+        else if (s_mesh_started && s_has_parent && !s_is_root) {
             //IF POLL VAR IS TRUE, POLL AND SEND DATA TO ROOT
             if (sensor_node.polled) {
                 sensor_node.polled = false;
@@ -203,27 +224,6 @@ static void mesh_tx_task(void *arg) {
                 } else {
                     ESP_LOGI("NODE_SEND", "sent: %s", sensor_node.jsonPayload);
                 }
-            }
-        }
-        //ROOT NODE
-        else if (s_is_root && s_mesh_started) {
-            //self poll 10s
-            TickType_t now = xTaskGetTickCount();
-            if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
-                last_root_poll = now;
-                sensor_node.polled = true;
-                //check for timeout manually since the event handler is busted or something
-                ws_watchdog();
-            }
-
-            if (sensor_node.polled) {
-                //reset poll and send to ws server
-                sensor_node.polled = false;
-                sensorNode_get_data(&sensor_node);
-                sensorNode_package_data(&sensor_node);
-
-                ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
-                ws_send(sensor_node.jsonPayload);
             }
         }
         //prevent watchdog crashes
