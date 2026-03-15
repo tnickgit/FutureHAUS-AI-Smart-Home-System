@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_LIGHT //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_MOTION //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -113,6 +113,18 @@ static void root_polling_task(void *arg) {
                 if (err == ESP_OK) ESP_LOGI("ROOT_SEND", "Sent POLL to %s", node_table[i].id);
                 else ESP_LOGW("ROOT_SEND", "Failed to poll %s", node_table[i].id);
             }
+        }
+    }
+}
+
+
+//MOTION POLLING TASK
+static void motion_poll_task(void *arg) {
+    sensorNode *sn = (sensorNode *)arg;
+    if(sn->constructed){
+        while (1) {
+            determineMotion(&sn->ms);
+            vTaskDelay(pdMS_TO_TICKS(100)); // poll every 100ms
         }
     }
 }
@@ -390,4 +402,9 @@ void app_main(void) {
 
     xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 5, NULL);
     xTaskCreate(root_polling_task, "root_poll", 4096, NULL, 3, NULL);
+    if (NODE_TYPE == SENSOR_TYPE_MOTION) {        
+        motionSense_init(&sensor_node.ms);
+        sensor_node.constructed = true; 
+        xTaskCreate(motion_poll_task, "motion_poll", 2048, &sensor_node, 6, NULL);
+    }
 }

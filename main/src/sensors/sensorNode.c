@@ -34,6 +34,7 @@ void sensorNode_get_data(sensorNode *sn) {
                 break;
             case SENSOR_TYPE_MOTION:
                 sn->ms = motionSense_construct();
+                motionSense_init(&sn->ms);   // <-- add this line
                 sn->data = sn->ms.sensedMotion;
                 break;
             case SENSOR_TYPE_POWER:
