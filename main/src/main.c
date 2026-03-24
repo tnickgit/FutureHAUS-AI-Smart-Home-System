@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_LIGHT   //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_MOTION //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -117,6 +117,18 @@ static void root_polling_task(void *arg) {
     }
 }
 
+
+//MOTION POLLING TASK
+static void motion_poll_task(void *arg) {
+    sensorNode *sn = (sensorNode *)arg;
+    if(sn->constructed){
+        while (1) {
+            determineMotion(&sn->ms);
+            vTaskDelay(pdMS_TO_TICKS(100)); // poll every 100ms
+        }
+    }
+}
+
 /************* RX/TX tasks *************/
 //Root RX task — prints any packets it receives
 void mesh_rx_task(void *arg) {
@@ -183,7 +195,28 @@ static void mesh_tx_task(void *arg) {
 
     for (;;) {
         //CHILD NODES
-        if (s_mesh_started && s_has_parent && !s_is_root) {
+        if (s_is_root && s_mesh_started) {
+            //self poll 10s
+            TickType_t now = xTaskGetTickCount();
+            if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
+                last_root_poll = now;
+                sensor_node.polled = true;
+                //check for timeout manually since the event handler is busted or something
+                ws_watchdog();
+            }
+
+            if (sensor_node.polled) {
+                //reset poll and send to ws server
+                sensor_node.polled = false;
+                sensorNode_get_data(&sensor_node);
+                sensorNode_package_data(&sensor_node);
+
+                ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
+                ws_send(sensor_node.jsonPayload);
+            }
+        }
+        //ROOT NODE
+        else if (s_mesh_started && s_has_parent && !s_is_root) {
             //IF POLL VAR IS TRUE, POLL AND SEND DATA TO ROOT
             if (sensor_node.polled) {
                 sensor_node.polled = false;
@@ -203,27 +236,6 @@ static void mesh_tx_task(void *arg) {
                 } else {
                     ESP_LOGI("NODE_SEND", "sent: %s", sensor_node.jsonPayload);
                 }
-            }
-        }
-        //ROOT NODE
-        else if (s_is_root && s_mesh_started) {
-            //self poll 10s
-            TickType_t now = xTaskGetTickCount();
-            if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
-                last_root_poll = now;
-                sensor_node.polled = true;
-                //check for timeout manually since the event handler is busted or something
-                ws_watchdog();
-            }
-
-            if (sensor_node.polled) {
-                //reset poll and send to ws server
-                sensor_node.polled = false;
-                sensorNode_get_data(&sensor_node);
-                sensorNode_package_data(&sensor_node);
-
-                ESP_LOGI("ROOT_SENSOR", "Root local data: %s", sensor_node.jsonPayload);
-                ws_send(sensor_node.jsonPayload);
             }
         }
         //prevent watchdog crashes
@@ -390,4 +402,9 @@ void app_main(void) {
 
     xTaskCreate(mesh_tx_task, "mesh_tx", 4096, NULL, 5, NULL);
     xTaskCreate(root_polling_task, "root_poll", 4096, NULL, 3, NULL);
+    if (NODE_TYPE == SENSOR_TYPE_MOTION) {        
+        motionSense_init(&sensor_node.ms);
+        sensor_node.constructed = true; 
+        xTaskCreate(motion_poll_task, "motion_poll", 2048, &sensor_node, 6, NULL);
+    }
 }
