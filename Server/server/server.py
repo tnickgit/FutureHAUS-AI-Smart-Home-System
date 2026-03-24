@@ -4,11 +4,14 @@ import logging
 import sys
 from typing import Dict, Any
 from logging.handlers import RotatingFileHandler
-# from ai import process_sensor_data
+from ai import process_sensor_update, get_water_totals
+
+from datetime import datetime
 
 import websockets
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets.exceptions import ConnectionClosed
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +22,17 @@ STATE_LOCK = asyncio.Lock()
 ROOT_WS: WebSocketServerProtocol | None = None
 ROOT_ID: str | None = None
 
+IPAD_SRC = None
+IPAD_ID = None
+
 rows = 5
 columns = 1000
 database = [[0 for _ in range(columns)] for _ in range(rows)]
 db_time = [[0 for _ in range(columns)] for _ in range(rows)]
 index = 0
+
+MAX_RECORDS = 100000
+database_file = "database.json"
 
 ELEC = 3
 WATER = 0
@@ -35,7 +44,7 @@ port = 8765
 
 # BROADCASTING FUNCTIONS 
 # ----------------------------------------------------------------------------------------------------------------------
-async def broadcast(obj: dict) -> None:
+async def broadcast(obj: dict[str, Any]) -> None:
     if not CLIENTS:
         return
     msg = json.dumps(obj)
@@ -64,6 +73,21 @@ def place_data(CS: int, data: Any, time: str) -> None:
     db_time[CS][index] = time
     index = (index + 1) % columns
 
+def store_json_commands(incoming_data: Any):
+    try:
+        with open(database_file, "r") as db:
+            data = db.readlines()
+    except FileNotFoundError:
+        data = []
+    
+    data.append(json.dumps(incoming_data) + "\n")
+
+    if len(data) > MAX_RECORDS:
+        data = data[~MAX_RECORDS]
+    
+    with open(database_file, "w") as db:
+        db.write(data)
+
 
 def get_root_ws() -> WebSocketServerProtocol | None:
     if ROOT_ID is None:
@@ -78,7 +102,7 @@ def get_root_ws() -> WebSocketServerProtocol | None:
     return target_ws
 
 def give_data_to_ai(data: dict):
-    result = process_sensor_data(data)
+    result = process_sensor_update(data)
     logger.info(f"Data has been sent to AI and produced {result}")
 
 # HANDLERS THAT SEND TO BACK TO THE NODE AND AI
@@ -86,17 +110,9 @@ def give_data_to_ai(data: dict):
 
 # this function is used to send any temperture commands if any change is needed
 async def handle_temp_data(src_id, data, time):
-    try:
-        temp = float(data.get("temperature"))
-        humidity_percent = float(data.get("humidity_percent"))
-        set_temp = float(data.get("set_temperature"))
-    except (TypeError, ValueError):
-        logger.info(f"could not convert the data from {src_id}: {data}")
-        return
-
-    if not (temp >= 70 or temp <= 62):  # if the temp is not in between cancel
-        return
-
+    type = data.get("type")
+    temp_f = float(data.get("temp_f"))
+    humidity_percent = float(data.get("humidity_percent"))
 
     target_ws = get_root_ws()
     if not target_ws:
@@ -107,28 +123,43 @@ async def handle_temp_data(src_id, data, time):
     send_data = {
         "target": src_id,
         "cmd": "SET_TEMP",
-        "value": set_temp
+        "timestamp": datetime.now(),
+        "humidity": humidity_percent,
+        "value": 0
     }
     # node sent to the ai
     send_data_ai = {
-        "type": "temp_hum",
+        "type": type,
         "timestamp": time,
-        "temperature_f": temp,
+        "temperature_f": temp_f,
         "humidity_percent": humidity_percent
     }
 
     # this data is sent back to the microcontroller node
     try:
-        logger.info(f"At {time} the temp was {temp} and was set to {set_temp}")
+        logger.info(f"The temp is {temp_f} and humidity is {humidity_percent}%")
         await target_ws.send(json.dumps(send_data))
     except ConnectionClosed:
         logger.info(f"{src_id} connection has disconnected")
         CLIENTS.pop(src_id, None)
     except Exception as e:
         logger.info("could not send data")
+    
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data))
+    except ConnectionClosed:
+        logger.info(f"IPAD could not be reached")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
 
+    # this will store the data in json file so the AI can use for later
+    store_json_commands(send_data)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
+
+
 
 # this function handles data from the water sensor and sends it to the AI when the event when using water says stop
 async def handle_light_data(src_id, data, time):
@@ -143,7 +174,7 @@ async def handle_light_data(src_id, data, time):
 
     send_data_ai = {
             "type": "light",
-            "timestamp": time,
+            "timestamp": datetime.now(),
             "lux": float(lux_value)
     }
 
@@ -153,16 +184,18 @@ async def handle_light_data(src_id, data, time):
         send_data_client = {
             "target": src_id,
             "cmd": "LIGHT_ON",
+            "timestamp": datetime.now(),
             "value": isOn
         }
-        logger.info(f"Light is on and brightness is set to {lux_data}")
+        logger.info(f"Brightness is {lux_data}")
     else:
         send_data_client = {
             "target": src_id,
             "cmd": "LIGHT_OFF",
+            "timestamp": datetime.now(),
             "value": isOn
         }
-        logger.info(f"light is off")
+        logger.info(f"Brightness is {lux_data}")
 
     # data sent back to the client
     target_ws = get_root_ws()
@@ -177,6 +210,17 @@ async def handle_light_data(src_id, data, time):
     except Exception as e:
         logger.info("could not send data")
 
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data_client))
+    except ConnectionClosed:
+        logger.info(f"IPAD could not be reached")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
+
+    # this will store the data in json file so the AI can use for later
+    store_json_commands(send_data_client)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
 
@@ -186,44 +230,70 @@ async def handle_light_data(src_id, data, time):
 
 # This function will gather data from the motion sensor and send to the ai
 async def handle_motion_data(src_id, data, time):
-    seconds_since_motion = float(data.get("seconds"))
     type = data.get("type")
+    motion_set = data.get("is_motion")
+
+    if motion_set == "false":
+        logger.info(f"No Motion detected")
+        motion_value = 0
+    elif motion_set == "true":
+        logger.info(f"Motion Detected")
+        motion_value = 1
+
+    logger.info(f"motion_value: {motion_value}")
 
     send_data_ai = {
-        "type": "type",
-        "timestamp": "time",
-        "seconds_since_motion": seconds_since_motion
+        "type": type,
+        "timestamp": datetime.now(),
+        "motion": motion_value
     }
 
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data_ai))
+    except ConnectionClosed:
+        logger.info(f"IPAD could not be reached")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
+
+    # this will store the data in json file so the AI can use for later
+    store_json_commands(send_data_ai)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
 
 # This function will handle data from water sensor and send over to AI
-async def handle_water_data(node_type, src_id, data, time):
+async def handle_water_data(src_id, data, time):
 
     #for water data, data is going to have multiple sub catagories
-    fixure = data.get("fixure")
-    amount = data.get("amount")
-    event = data.get("event")
+    type = data.get("type")
+    fixture = data.get("fixture")
+    amount = float(data.get("curr_usage"))
 
-    if event == "stop":
-        logger.info("Water has stopped running. Used {amount} gal/s")
-        place_data(node_type, data, time) # put data in database
-    elif event == "start":
-        logger.info(f"Water is running from {fixure}")
-
+    logger.info(f"current usage is {amount} for the {fixture}")
     # make json file for what to send the AI
     send_data_ai = {
-        "type": "water_event",
-        "timestamp": time,
-        "fixture": fixure,
-        "event": event,
-        "total_gallons": float(amount)
+        "type": type,
+        "fixture": fixture,
+        "timestamp": datetime.now(),
+        "gallons": amount
     }
 
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data_ai))
+    except ConnectionClosed:
+        logger.info(f"IPAD could not be reached")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
 
+    # this will store the data in json file so the AI can use for later
+    store_json_commands(send_data_ai)
     # this sends the data to the ai model and logs what happens
-    give_data_to_ai(send_data_ai)
+    process_sensor_update(send_data_ai)
+    result = get_water_totals()
+    logger.info(f"Water amount is {result}")
     
 
 # this functions needs to gather data from the sensor and arrage the JSON file recieved and place it into a JSON
@@ -234,10 +304,21 @@ async def handle_electric_data(src_id, data, time):
 
     send_data_ai = {
         "type": type,
-        "timestamp": time,
+        "timestamp": datetime.now(),
         "usage": usage
     }
 
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data_ai))
+    except ConnectionClosed:
+        logger.info(f"IPAD could not be reached")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
+
+    # this will store the data in json file so the AI can use for later
+    store_json_commands(send_data_ai)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
 
@@ -259,7 +340,9 @@ async def handle_sensor_data(msg: dict) -> None:
 
     elif NODE_TYPE == WATER:
         logger.info(f"Water: Recieved Data")
-        await handle_water_data(NODE_TYPE, SRC_ID, DATA, TIMESTAMP)
+        place_data(NODE_TYPE, DATA, TIMESTAMP) # put data in database
+
+        await handle_water_data(SRC_ID, DATA, TIMESTAMP)
 
     elif NODE_TYPE == HVAC:
         logger.info(f"Temp: Recieved Data")
@@ -272,7 +355,6 @@ async def handle_sensor_data(msg: dict) -> None:
         await handle_light_data(SRC_ID, DATA, TIMESTAMP)
 
     elif NODE_TYPE == MOTION:
-        logger.info(f"Motion Detected")
         await handle_motion_data(SRC_ID, DATA, TIMESTAMP)
         place_data(MOTION, DATA, TIMESTAMP)
 
@@ -291,7 +373,7 @@ async def handle_message(ws: WebSocketServerProtocol, msg: dict) -> None:
 
 
 async def handler(ws: WebSocketServerProtocol) -> None:
-    global ROOT_WS, ROOT_ID
+    global ROOT_WS, ROOT_ID, IPAD_SRC, IPAD_ID
     logger.info("A new client has joined")
     node_id: str | None = None
 
@@ -308,19 +390,22 @@ async def handler(ws: WebSocketServerProtocol) -> None:
                 logger.info("the isInstance file failed")
                 await ws.send(json.dumps({"type": "error", "message": "message must be a JSON object"}))
                 continue
-
             # register node if it provides src_id
-            if node_id is None and msg.get("src_id"):
+            if msg.get("type") == "Ipad_Display" and IPAD_ID is None and IPAD_SRC is None:
+                IPAD_ID = ws
+                IPAD_SRC = msg.get("src_id")
+                logger.info(f"ipad is connected to the server: {IPAD_ID}")
+            elif node_id is None and msg.get("src_id") and msg.get("isRoot") == True:
                 node_id = msg["src_id"]
                 CLIENTS[node_id] = ws
                 logger.info(f"node id is {node_id}")
                 # if your nodes provide role, capture root
-                if msg.get("isRoot") == True:
-                    ROOT_WS = ws
-                    ROOT_ID = node_id
-                    logger.info(f"root id is {ROOT_ID} and root ws is {ROOT_WS}")
-
-            await handle_message(ws, msg)
+                ROOT_WS = ws
+                ROOT_ID = node_id
+                logger.info(f"root id is {ROOT_ID} and root ws is {ROOT_WS}")
+            
+            if ROOT_ID is not None:
+                await handle_message(ws, msg)
     except ConnectionClosed:
         pass
     except Exception as e:
@@ -331,8 +416,6 @@ async def handler(ws: WebSocketServerProtocol) -> None:
         if ROOT_WS is ws:
             ROOT_WS = None
             ROOT_ID = None
-
-
 def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -351,11 +434,12 @@ def setup_logging():
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
 
-    # file handler
+    # file handler (clears each run)
     file_handler = RotatingFileHandler(
         "server.log",
-        maxBytes=5_000_000,  # 5 MB
-        backupCount=3
+        maxBytes=5_000_000,
+        backupCount=3,
+        mode="w"  # ⭐ overwrite on start
     )
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
