@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_MOTION //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_POWER //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -126,6 +126,15 @@ static void motion_poll_task(void *arg) {
             determineMotion(&sn->ms);
             vTaskDelay(pdMS_TO_TICKS(100)); // poll every 100ms
         }
+    }
+}
+
+//WATER POLLING TASK
+static void water_poll_task(void *arg) {
+    sensorNode *sn = (sensorNode *)arg;
+    while (1) {
+        vTaskDelay(pdMS_TO_TICKS(1000)); // exactly 1s window, matches Arduino sketch
+        determineWaterLevel(&sn->ws);
     }
 }
 
@@ -406,5 +415,10 @@ void app_main(void) {
         motionSense_init(&sensor_node.ms);
         sensor_node.constructed = true; 
         xTaskCreate(motion_poll_task, "motion_poll", 2048, &sensor_node, 6, NULL);
+    }
+    if (NODE_TYPE == SENSOR_TYPE_WATER) {
+        waterSense_init(&sensor_node.ws);
+        sensor_node.constructed = true;
+        xTaskCreate(water_poll_task, "water_poll", 2048, &sensor_node, 6, NULL);
     }
 }

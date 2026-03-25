@@ -3,6 +3,7 @@
 // Constructor
 sensorNode sensorNode_construct(enum SensorType type, char* nodeID, bool isRoot) {
     sensorNode sn; // initialize from template
+    memset(&sn, 0, sizeof(sensorNode));
     sn.type = type;
     strncpy(sn.nodeID, nodeID, MAC_STR_SIZE);
     sn.isRoot = isRoot;
@@ -38,6 +39,9 @@ void sensorNode_get_data(sensorNode *sn) {
                 sn->data = sn->ms.sensedMotion;
                 break;
             case SENSOR_TYPE_POWER:
+                sn->es = elecSense_construct();
+                sn->data = sn->es.usage;
+                break;
             default:
                 //ESP_LOGW("DEFAULT_NO_TYPE");
                 break;
@@ -60,6 +64,10 @@ void sensorNode_get_data(sensorNode *sn) {
             case SENSOR_TYPE_MOTION:
                 determineMotion(&sn->ms);
                 sn->data = sn->ms.isMotionSensed;
+                break;
+            case SENSOR_TYPE_POWER:
+                determineElecUsage(&sn->es);
+                sn->data = sn->es.usage;
                 break;
             default:
                 //ESP_LOGW("DEFAULT_NO_TYPE");
@@ -86,6 +94,11 @@ void sensorNode_package_data(sensorNode *sn) {
         case SENSOR_TYPE_MOTION:
             snprintf(sn->data_string,PAYLOAD_SIZE/2, "\"type\":\"motion\", \"is_motion\":\"%s\"", sn->ms.isMotionSensed ? "true" : "false"); 
             break;
+        case SENSOR_TYPE_POWER:
+            snprintf(sn->data_string, PAYLOAD_SIZE/2,
+                "\"type\":\"power\", \"appliance\":\"%s\", \"usage\":%d, \"total\":%d",
+                sn->es.appliance, sn->es.usage, sn->es.totalUsage);
+    break;
         default:
             break;
     }

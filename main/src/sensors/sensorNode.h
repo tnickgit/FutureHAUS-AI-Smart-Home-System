@@ -5,6 +5,7 @@
 #include "temperatureSense.h"
 #include "lightSense.h"
 #include "motionSense.h"
+#include "electricSense.h"
 #include "esp_timer.h"
 #include "cJSON.h"
 #include "esp_log.h"
@@ -41,6 +42,7 @@ struct _sensorNode{
     waterSense ws;
     lightSense ls;
     motionSense ms;
+    electricSense es;
 };
 
 typedef struct _sensorNode sensorNode;
