@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_WATER //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_TEMP //change to whatever needed
 /******************************************************/  
 
 //node data

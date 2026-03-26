@@ -125,7 +125,7 @@ async def handle_temp_data(src_id, data, time):
         "cmd": "SET_TEMP",
         "timestamp": str(datetime.now().strftime("&Y-&m-&d &H:&M:&S")),
         "humidity": humidity_percent,
-        "value": 0
+        "value": temp_f
     }
     # node sent to the ai
     send_data_ai = {
@@ -142,11 +142,20 @@ async def handle_temp_data(src_id, data, time):
         "sensor_type": 2,
         "data": {
             "type": "temp_hum",
-            "temp_f": float(temp_f),
+            "temp_f": temp_f,
             "humidity_percent": float(humidity_percent)
         },
         "timestamp": int(datetime.now().timestamp() * 1000)
     }
+
+    try:
+        logger.info(f"sent the data to the IPad to display")
+        # this will send the data back to the IPad to display on the GUI
+        await IPAD_ID.send(json.dumps(send_data_display))
+    except ConnectionClosed:
+        logger.info(f"Ipad is not connected")
+    except Exception as e:
+        logger.info("info could not be sent to IPAD")
 
     # this data is sent back to the microcontroller node
     try:
@@ -157,15 +166,6 @@ async def handle_temp_data(src_id, data, time):
         CLIENTS.pop(src_id, None)
     except Exception as e:
         logger.info("could not send data")
-    
-    try:
-        logger.info(f"sent the data to the IPad to display")
-        # this will send the data back to the IPad to display on the GUI
-        await IPAD_ID.send(json.dumps(send_data_display))
-    except ConnectionClosed:
-        logger.info(f"Ipad is not connected")
-    except Exception as e:
-        logger.info("info could not be sent to IPAD")
 
     # this will store the data in json file so the AI can use for later
     # store_json_commands(send_data)

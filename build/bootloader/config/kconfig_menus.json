@@ -473,6 +473,16 @@
         "children": [],
         "depends_on": null,
         "help": null,
+        "id": "SOC_XTAL_SUPPORT_AUTO_DETECT",
+        "name": "SOC_XTAL_SUPPORT_AUTO_DETECT",
+        "range": null,
+        "title": null,
+        "type": "bool"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
         "id": "SOC_ADC_RTC_CTRL_SUPPORTED",
         "name": "SOC_ADC_RTC_CTRL_SUPPORTED",
         "range": null,
@@ -1083,6 +1093,16 @@
         "children": [],
         "depends_on": null,
         "help": null,
+        "id": "SOC_I2S_SUPPORTS_DAC",
+        "name": "SOC_I2S_SUPPORTS_DAC",
+        "range": null,
+        "title": null,
+        "type": "bool"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
         "id": "SOC_I2S_SUPPORTS_LCD_CAMERA",
         "name": "SOC_I2S_SUPPORTS_LCD_CAMERA",
         "range": null,
@@ -1393,6 +1413,46 @@
         "children": [],
         "depends_on": null,
         "help": null,
+        "id": "SOC_PCNT_GROUPS",
+        "name": "SOC_PCNT_GROUPS",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_PCNT_UNITS_PER_GROUP",
+        "name": "SOC_PCNT_UNITS_PER_GROUP",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_PCNT_CHANNELS_PER_UNIT",
+        "name": "SOC_PCNT_CHANNELS_PER_UNIT",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_PCNT_THRES_POINT_PER_UNIT",
+        "name": "SOC_PCNT_THRES_POINT_PER_UNIT",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
         "id": "SOC_RMT_GROUPS",
         "name": "SOC_RMT_GROUPS",
         "range": null,
@@ -1513,6 +1573,36 @@
         "children": [],
         "depends_on": null,
         "help": null,
+        "id": "SOC_SDM_GROUPS",
+        "name": "SOC_SDM_GROUPS",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_SDM_CHANNELS_PER_GROUP",
+        "name": "SOC_SDM_CHANNELS_PER_GROUP",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_SDM_CLK_SUPPORT_APB",
+        "name": "SOC_SDM_CLK_SUPPORT_APB",
+        "range": null,
+        "title": null,
+        "type": "bool"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
         "id": "SOC_SPI_HD_BOTH_INOUT_SUPPORTED",
         "name": "SOC_SPI_HD_BOTH_INOUT_SUPPORTED",
         "range": null,
@@ -1625,6 +1715,56 @@
         "help": null,
         "id": "SOC_MEMSPI_SRC_FREQ_20M_SUPPORTED",
         "name": "SOC_MEMSPI_SRC_FREQ_20M_SUPPORTED",
+        "range": null,
+        "title": null,
+        "type": "bool"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_TIMER_GROUPS",
+        "name": "SOC_TIMER_GROUPS",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_TIMER_GROUP_TIMERS_PER_GROUP",
+        "name": "SOC_TIMER_GROUP_TIMERS_PER_GROUP",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_TIMER_GROUP_COUNTER_BIT_WIDTH",
+        "name": "SOC_TIMER_GROUP_COUNTER_BIT_WIDTH",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_TIMER_GROUP_TOTAL_TIMERS",
+        "name": "SOC_TIMER_GROUP_TOTAL_TIMERS",
+        "range": null,
+        "title": null,
+        "type": "int"
+    },
+    {
+        "children": [],
+        "depends_on": null,
+        "help": null,
+        "id": "SOC_TIMER_GROUP_SUPPORT_APB",
+        "name": "SOC_TIMER_GROUP_SUPPORT_APB",
         "range": null,
         "title": null,
         "type": "bool"
@@ -2213,16 +2353,6 @@
         "children": [],
         "depends_on": null,
         "help": null,
-        "id": "SOC_SDMMC_DATA_WIDTH_MAX",
-        "name": "SOC_SDMMC_DATA_WIDTH_MAX",
-        "range": null,
-        "title": null,
-        "type": "int"
-    },
-    {
-        "children": [],
-        "depends_on": null,
-        "help": null,
         "id": "SOC_WIFI_WAPI_SUPPORT",
         "name": "SOC_WIFI_WAPI_SUPPORT",
         "range": null,
@@ -2665,7 +2795,7 @@
                     }
                 ],
                 "depends_on": null,
-                "help": "Select the way the application is built.\n\nBy default, the application is built as a binary file in a format compatible with\nthe ESP-IDF bootloader. In addition to this application, 2nd stage bootloader is\nalso built. Application and bootloader binaries can be written into flash and\nloaded/executed from there.\n\nAnother option, useful for only very small and limited applications, is to only link\nthe .elf file of the application, such that it can be loaded directly into RAM over\nJTAG or UART. Note that since IRAM and DRAM sizes are very limited, it is not possible\nto build any complex application this way. However for some kinds of testing and debugging,\nthis option may provide faster iterations, since the application does not need to be\nwritten into flash.\n\nNote: when APP_BUILD_TYPE_RAM is selected and loaded with JTAG, ESP-IDF does not contain\nall the startup code required to initialize the CPUs and ROM memory (data/bss).\nTherefore it is necessary to execute a bit of ROM code prior to executing the application.\nA gdbinit file may look as follows (for ESP32):\n\n    # Connect to a running instance of OpenOCD\n    target remote :3333\n    # Reset and halt the target\n    mon reset halt\n    # Run to a specific point in ROM code,\n    #  where most of initialization is complete.\n    thb *0x40007d54\n    c\n    # Load the application into RAM\n    load\n    # Run till app_main\n    tb app_main\n    c\n\nExecute this gdbinit file as follows:\n\n    xtensa-esp32-elf-gdb build/app-name.elf -x gdbinit\n\nExample gdbinit files for other targets can be found in tools/test_apps/system/gdb_loadable_elf/\n\nWhen loading the BIN with UART, the ROM will jump to ram and run the app after finishing the ROM\nstartup code, so there's no additional startup initialization required. You can use the\n`load_ram` in esptool.py to load the generated .bin file into ram and execute.\n\nExample:\n    esptool.py --chip {chip} -p {port} -b {baud} --no-stub load_ram {app.bin}\n\nRecommended sdkconfig.defaults for building loadable ELF files is as follows.\nCONFIG_APP_BUILD_TYPE_RAM is required, other options help reduce application\nmemory footprint.\n\n    CONFIG_APP_BUILD_TYPE_RAM=y\n    CONFIG_VFS_SUPPORT_TERMIOS=\n    CONFIG_LIBC_NEWLIB_NANO_FORMAT=y\n    CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y\n    CONFIG_ESP_DEBUG_STUBS_ENABLE=\n    CONFIG_ESP_ERR_TO_NAME_LOOKUP=",
+                "help": "Select the way the application is built.\n\nBy default, the application is built as a binary file in a format compatible with\nthe ESP-IDF bootloader. In addition to this application, 2nd stage bootloader is\nalso built. Application and bootloader binaries can be written into flash and\nloaded/executed from there.\n\nAnother option, useful for only very small and limited applications, is to only link\nthe .elf file of the application, such that it can be loaded directly into RAM over\nJTAG or UART. Note that since IRAM and DRAM sizes are very limited, it is not possible\nto build any complex application this way. However for some kinds of testing and debugging,\nthis option may provide faster iterations, since the application does not need to be\nwritten into flash.\n\nNote: when APP_BUILD_TYPE_RAM is selected and loaded with JTAG, ESP-IDF does not contain\nall the startup code required to initialize the CPUs and ROM memory (data/bss).\nTherefore it is necessary to execute a bit of ROM code prior to executing the application.\nA gdbinit file may look as follows (for ESP32):\n\n    # Connect to a running instance of OpenOCD\n    target remote :3333\n    # Reset and halt the target\n    mon reset halt\n    # Run to a specific point in ROM code,\n    #  where most of initialization is complete.\n    thb *0x40007d54\n    c\n    # Load the application into RAM\n    load\n    # Run till app_main\n    tb app_main\n    c\n\nExecute this gdbinit file as follows:\n\n    xtensa-esp32-elf-gdb build/app-name.elf -x gdbinit\n\nExample gdbinit files for other targets can be found in tools/test_apps/system/gdb_loadable_elf/\n\nWhen loading the BIN with UART, the ROM will jump to ram and run the app after finishing the ROM\nstartup code, so there's no additional startup initialization required. You can use the\n`load_ram` in esptool.py to load the generated .bin file into ram and execute.\n\nExample:\n    esptool.py --chip {chip} -p {port} -b {baud} --no-stub load_ram {app.bin}\n\nRecommended sdkconfig.defaults for building loadable ELF files is as follows.\nCONFIG_APP_BUILD_TYPE_RAM is required, other options help reduce application\nmemory footprint.\n\n    CONFIG_APP_BUILD_TYPE_RAM=y\n    CONFIG_VFS_SUPPORT_TERMIOS=\n    CONFIG_NEWLIB_NANO_FORMAT=y\n    CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y\n    CONFIG_ESP_DEBUG_STUBS_ENABLE=\n    CONFIG_ESP_ERR_TO_NAME_LOOKUP=",
                 "id": "build-type-application-build-type",
                 "name": "APP_BUILD_TYPE",
                 "title": "Application build type",
@@ -2951,6 +3081,16 @@
                         "range": null,
                         "title": "Optimize for performance (-O2)",
                         "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "(IDF_TARGET_ARCH_XTENSA || IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2) && <choice BOOTLOADER_COMPILER_OPTIMIZATION>",
+                        "help": null,
+                        "id": "BOOTLOADER_COMPILER_OPTIMIZATION_NONE",
+                        "name": "BOOTLOADER_COMPILER_OPTIMIZATION_NONE",
+                        "range": null,
+                        "title": "Debug without optimization (-O0) (Deprecated, will be removed in IDF v6.0)",
+                        "type": "bool"
                     }
                 ],
                 "depends_on": null,
@@ -3213,16 +3353,6 @@
                 "id": "bootloader-config-log",
                 "title": "Log",
                 "type": "menu"
-            },
-            {
-                "children": [],
-                "depends_on": null,
-                "help": "The CPU clock frequency to be at least raised to in 2nd bootloader. Invisible for users.",
-                "id": "BOOTLOADER_CPU_CLK_FREQ_MHZ",
-                "name": "BOOTLOADER_CPU_CLK_FREQ_MHZ",
-                "range": null,
-                "title": null,
-                "type": "int"
             },
             {
                 "children": [
@@ -4195,7 +4325,7 @@
                 "id": "SECURE_FLASH_ENCRYPT_ONLY_IMAGE_LEN_IN_APP_PART",
                 "name": "SECURE_FLASH_ENCRYPT_ONLY_IMAGE_LEN_IN_APP_PART",
                 "range": null,
-                "title": "Encrypt contents upto app image length in app partition",
+                "title": "Encrypt only the app image that is present in the partition of type app",
                 "type": "bool"
             },
             {
@@ -5128,7 +5258,7 @@
             {
                 "children": [],
                 "depends_on": null,
-                "help": "The offset address of the partition table is, by default, 0x8000, and it starts right after\nthe bootloader. This offset can be changed if more space is required for the bootloader.\nIf you change this offset, both the bootloader and the app must be compiled with the same\nPARTITION_TABLE_OFFSET value.\n\nThis value must be a multiple of 0x1000.\n\nIf you change the partition table offset, make sure to update the partition offsets in\nthe partition table CSV file. To let the build system automatically adjust partition offsets based on\nthe configured partition table offset, leave the offset fields blank in the CSV file.\n\nNote: If you specify fixed offsets in the partition table CSV (i.e., the offset column is not blank),\nthe first partition must start at PARTITION_TABLE_OFFSET + 0x1000, since the partition table occupies\n0x1000 bytes of flash space.",
+                "help": "The address of partition table (by default 0x8000).\nAllows you to move the partition table, it gives more space for the bootloader.\nNote that the bootloader and app will both need to be compiled with the same PARTITION_TABLE_OFFSET value.\n\nThis number should be a multiple of 0x1000.\n\nNote that partition offsets in the partition table CSV file may need to be changed if this value is set to\na higher value. To have each partition offset adapt to the configured partition table offset, leave all\npartition offsets blank in the CSV file.",
                 "id": "PARTITION_TABLE_OFFSET",
                 "name": "PARTITION_TABLE_OFFSET",
                 "range": null,
@@ -5479,16 +5609,6 @@
             {
                 "children": [],
                 "depends_on": null,
-                "help": "Enable this option if use GCC 15 or newer, and want to disable warnings which don't appear with\nGCC 14.",
-                "id": "COMPILER_DISABLE_GCC15_WARNINGS",
-                "name": "COMPILER_DISABLE_GCC15_WARNINGS",
-                "range": null,
-                "title": "Disable new warnings introduced in GCC 15",
-                "type": "bool"
-            },
-            {
-                "children": [],
-                "depends_on": null,
                 "help": "If enabled, RTL files will be produced during compilation. These files\ncan be used by other tools, for example to calculate call graphs.",
                 "id": "COMPILER_DUMP_RTL_FILES",
                 "name": "COMPILER_DUMP_RTL_FILES",
@@ -5548,16 +5668,6 @@
             },
             {
                 "children": [
-                    {
-                        "children": [],
-                        "depends_on": "<choice COMPILER_ORPHAN_SECTIONS>",
-                        "help": "Fails the link step with an error if orphan sections are detected.",
-                        "id": "COMPILER_ORPHAN_SECTIONS_ERROR",
-                        "name": "COMPILER_ORPHAN_SECTIONS_ERROR",
-                        "range": null,
-                        "title": "Fail if orphan sections found",
-                        "type": "bool"
-                    },
                     {
                         "children": [],
                         "depends_on": "<choice COMPILER_ORPHAN_SECTIONS>",
@@ -6227,7 +6337,7 @@
                                     }
                                 ],
                                 "depends_on": null,
-                                "help": "Choose which clock is used as RTC clock source.\n\n- \"Internal 150kHz oscillator\" option provides lowest deep sleep current\n    consumption, and does not require extra external components. However\n    frequency stability with respect to temperature is poor, so time may\n    drift in deep/light sleep modes.\n- \"External 32kHz crystal\" provides better frequency stability, at the\n    expense of slightly higher (1uA) deep sleep current consumption.\n- \"External 32kHz oscillator\" allows using 32kHz clock generated by an\n    external circuit. In this case, external clock signal must be connected\n    to 32K_XN pin.\n    Additionally, 1nF capacitor must be connected between 32K_XP pin and\n    ground. 32K_XP pin can not be used as a GPIO in this case.\n- \"Internal 8.5MHz oscillator divided by 256\" option results in higher\n    deep sleep current (by 5uA) but has better frequency stability than\n    the internal 150kHz oscillator. It does not require external components.",
+                                "help": "Choose which clock is used as RTC clock source.\n\n- \"Internal 150kHz oscillator\" option provides lowest deep sleep current\n    consumption, and does not require extra external components. However\n    frequency stability with respect to temperature is poor, so time may\n    drift in deep/light sleep modes.\n- \"External 32kHz crystal\" provides better frequency stability, at the\n    expense of slightly higher (1uA) deep sleep current consumption.\n- \"External 32kHz oscillator\" allows using 32kHz clock generated by an\n    external circuit. In this case, external clock signal must be connected\n    to 32K_XN pin. Amplitude should be <1.2V in case of sine wave signal,\n    and <1V in case of square wave signal. Common mode voltage should be\n    0.1 < Vcm < 0.5Vamp, where Vamp is the signal amplitude.\n    Additionally, 1nF capacitor must be connected between 32K_XP pin and\n    ground. 32K_XP pin can not be used as a GPIO in this case.\n- \"Internal 8.5MHz oscillator divided by 256\" option results in higher\n    deep sleep current (by 5uA) but has better frequency stability than\n    the internal 150kHz oscillator. It does not require external components.",
                                 "id": "component-config-hardware-settings-rtc-clock-config-rtc-clock-source",
                                 "name": "RTC_CLK_SRC",
                                 "title": "RTC clock source",
@@ -6334,6 +6444,24 @@
                         "children": [
                             {
                                 "children": [],
+                                "depends_on": "SOC_ETM_SUPPORTED",
+                                "help": "whether to enable the debug log message for ETM core driver.\nNote that, this option only controls the ETM related driver log, won't affect other drivers.",
+                                "id": "ETM_ENABLE_DEBUG_LOG",
+                                "name": "ETM_ENABLE_DEBUG_LOG",
+                                "range": null,
+                                "title": "Enable debug log",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": "SOC_ETM_SUPPORTED",
+                        "id": "component-config-hardware-settings-etm-configuration",
+                        "title": "ETM Configuration",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
                                 "depends_on": "SOC_GDMA_SUPPORTED",
                                 "help": "Place GDMA control functions (like start/stop/append/reset) into IRAM,\nso that these functions can be IRAM-safe and able to be called in the other IRAM interrupt context.",
                                 "id": "GDMA_CTRL_FUNC_IN_IRAM",
@@ -6374,12 +6502,12 @@
                             },
                             {
                                 "children": [],
-                                "depends_on": "SOC_GDMA_SUPPORT_WEIGHTED_ARBITRATION && IDF_EXPERIMENTAL_FEATURES && SOC_GDMA_SUPPORTED",
-                                "help": "Whether to enable the weighted arbitration for GDMA driver.\nThe default weight of each channel is 1. You need to set weight for each channel before transmissions.\nIf this option is enabled, the buffer should be aligned to the burst size.",
-                                "id": "GDMA_ENABLE_WEIGHTED_ARBITRATION",
-                                "name": "GDMA_ENABLE_WEIGHTED_ARBITRATION",
+                                "depends_on": "SOC_GDMA_SUPPORTED",
+                                "help": "This will ensure the GDMA interrupt handler is IRAM-Safe, allow to avoid flash\ncache misses, and also be able to run whilst the cache is disabled.\n(e.g. SPI Flash write).\nIf this option is enabled, ALL GDMA channel's ISR handlers should be placed in IRAM, which is a overkill.\nIt's recommend to set the \"isr_cache_safe\" in the \"gdma_channel_alloc_config_t\".\nThen other GDMA channels won't be influenced.",
+                                "id": "GDMA_ISR_IRAM_SAFE",
+                                "name": "GDMA_ISR_IRAM_SAFE",
                                 "range": null,
-                                "title": "GDMA enable weighted arbitration (Experimental)",
+                                "title": "GDMA ISR IRAM-Safe (Deprecated. Read Help!)",
                                 "type": "bool"
                             }
                         ],
@@ -6482,24 +6610,6 @@
                         "depends_on": "SOC_DMA2D_SUPPORTED",
                         "id": "component-config-hardware-settings-2d-dma-configurations",
                         "title": "2D-DMA Configurations",
-                        "type": "menu"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "SOC_ETM_SUPPORTED",
-                                "help": "If enabled, ETM driver will:\n1. ignore the global logging settings\n2. compile all log messages into the binary\n3. set the runtime log level to VERBOSE\nPlease enable this option by caution, as it will increase the binary size.",
-                                "id": "ETM_ENABLE_DEBUG_LOG",
-                                "name": "ETM_ENABLE_DEBUG_LOG",
-                                "range": null,
-                                "title": "Force enable debug log",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": "SOC_ETM_SUPPORTED",
-                        "id": "component-config-hardware-settings-event-task-matrix-etm-configurations",
-                        "title": "Event Task Matrix (ETM) Configurations",
                         "type": "menu"
                     },
                     {
@@ -6786,237 +6896,6 @@
             {
                 "children": [
                     {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC>",
-                                "help": null,
-                                "id": "LIBC_NEWLIB",
-                                "name": "LIBC_NEWLIB",
-                                "range": null,
-                                "title": "NewLib",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "!IDF_TOOLCHAIN_CLANG && IDF_EXPERIMENTAL_FEATURES && <choice LIBC>",
-                                "help": null,
-                                "id": "LIBC_PICOLIBC",
-                                "name": "LIBC_PICOLIBC",
-                                "range": null,
-                                "title": "Picolibc (EXPERIMENTAL)",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": null,
-                        "help": null,
-                        "id": "component-config-libc-libc-to-build-application-with",
-                        "name": "LIBC",
-                        "title": "LibC to build application with",
-                        "type": "choice"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": null,
-                        "help": null,
-                        "id": "LIBC_MISC_IN_IRAM",
-                        "name": "LIBC_MISC_IN_IRAM",
-                        "range": null,
-                        "title": "Place misc libc functions (abort/assert/stdatomics) in IRAM",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "LIBC_NEWLIB",
-                        "help": "Enable this option to include be able to call the lock API from\ncode that runs while cache is disabled, e.g. IRAM interrupts.",
-                        "id": "LIBC_LOCKS_PLACE_IN_IRAM",
-                        "name": "LIBC_LOCKS_PLACE_IN_IRAM",
-                        "range": null,
-                        "title": "Place lock API in IRAM",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDOUT_LINE_ENDING_CRLF",
-                                "name": "LIBC_STDOUT_LINE_ENDING_CRLF",
-                                "range": null,
-                                "title": "CRLF",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDOUT_LINE_ENDING_LF",
-                                "name": "LIBC_STDOUT_LINE_ENDING_LF",
-                                "range": null,
-                                "title": "LF",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDOUT_LINE_ENDING_CR",
-                                "name": "LIBC_STDOUT_LINE_ENDING_CR",
-                                "range": null,
-                                "title": "CR",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": "VFS_SUPPORT_IO",
-                        "help": "This option allows configuring the desired line endings sent to console\nwhen a newline ('\\n', LF) appears on stdout.\nThree options are possible:\n\nCRLF: whenever LF is encountered, prepend it with CR\n\nLF: no modification is applied, stdout is sent as is\n\nCR: each occurrence of LF is replaced with CR\n\nThis option doesn't affect behavior of the UART driver (drivers/uart.h).",
-                        "id": "component-config-libc-line-ending-for-console-output",
-                        "name": "LIBC_STDOUT_LINE_ENDING",
-                        "title": "Line ending for console output",
-                        "type": "choice"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDIN_LINE_ENDING_CRLF",
-                                "name": "LIBC_STDIN_LINE_ENDING_CRLF",
-                                "range": null,
-                                "title": "CRLF",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDIN_LINE_ENDING_LF",
-                                "name": "LIBC_STDIN_LINE_ENDING_LF",
-                                "range": null,
-                                "title": "LF",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
-                                "help": null,
-                                "id": "LIBC_STDIN_LINE_ENDING_CR",
-                                "name": "LIBC_STDIN_LINE_ENDING_CR",
-                                "range": null,
-                                "title": "CR",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": "VFS_SUPPORT_IO",
-                        "help": "This option allows configuring which input sequence on console produces\na newline ('\\n', LF) on stdin.\nThree options are possible:\n\nCRLF: CRLF is converted to LF\n\nLF: no modification is applied, input is sent to stdin as is\n\nCR: each occurrence of CR is replaced with LF\n\nThis option doesn't affect behavior of the UART driver (drivers/uart.h).",
-                        "id": "component-config-libc-line-ending-for-console-input",
-                        "name": "LIBC_STDIN_LINE_ENDING",
-                        "title": "Line ending for console input",
-                        "type": "choice"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "LIBC_NEWLIB",
-                        "help": "In most chips the ROM contains parts of newlib C library, including printf/scanf family\nof functions. These functions have been compiled with so-called \"nano\"\nformatting option. This option doesn't support 64-bit integer formats and C99\nfeatures, such as positional arguments.\n\nFor more details about \"nano\" formatting option, please see newlib readme file,\nsearch for '--enable-newlib-nano-formatted-io':\nhttps://sourceware.org/git/?p=newlib-cygwin.git;a=blob_plain;f=newlib/README;hb=HEAD\n\nIf this option is enabled and the ROM contains functions from newlib-nano, the build system\nwill use functions available in ROM, reducing the application binary size.\nFunctions available in ROM run faster than functions which run from flash. Functions available\nin ROM can also run when flash instruction cache is disabled.\n\nSome chips (e.g. ESP32-C6) has the full formatting versions of printf/scanf in ROM instead of\nthe nano versions and in this building with newlib nano might actually increase the size of\nthe binary. Which functions are present in ROM can be seen from ROM caps:\nESP_ROM_HAS_NEWLIB_NANO_FORMAT and ESP_ROM_HAS_NEWLIB_NORMAL_FORMAT.\n\nIf you need 64-bit integer formatting support or C99 features, keep this\noption disabled.",
-                        "id": "LIBC_NEWLIB_NANO_FORMAT",
-                        "name": "LIBC_NEWLIB_NANO_FORMAT",
-                        "range": null,
-                        "title": "Enable 'nano' formatting options for printf/scanf family",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
-                                "help": null,
-                                "id": "LIBC_TIME_SYSCALL_USE_RTC_HRT",
-                                "name": "LIBC_TIME_SYSCALL_USE_RTC_HRT",
-                                "range": null,
-                                "title": "RTC and high-resolution timer",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
-                                "help": null,
-                                "id": "LIBC_TIME_SYSCALL_USE_RTC",
-                                "name": "LIBC_TIME_SYSCALL_USE_RTC",
-                                "range": null,
-                                "title": "RTC",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
-                                "help": null,
-                                "id": "LIBC_TIME_SYSCALL_USE_HRT",
-                                "name": "LIBC_TIME_SYSCALL_USE_HRT",
-                                "range": null,
-                                "title": "High-resolution timer",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
-                                "help": null,
-                                "id": "LIBC_TIME_SYSCALL_USE_NONE",
-                                "name": "LIBC_TIME_SYSCALL_USE_NONE",
-                                "range": null,
-                                "title": "None",
-                                "type": "bool"
-                            }
-                        ],
-                        "depends_on": null,
-                        "help": "This setting defines which hardware timers are used to\nimplement 'gettimeofday' and 'time' functions in C library.\n\n- If both high-resolution (systimer for all targets except ESP32)\n    and RTC timers are used, timekeeping will continue in deep sleep.\n    Time will be reported at 1 microsecond resolution.\n    This is the default, and the recommended option.\n- If only high-resolution timer (systimer) is used, gettimeofday will\n    provide time at microsecond resolution.\n    Time will not be preserved when going into deep sleep mode.\n- If only RTC timer is used, timekeeping will continue in\n    deep sleep, but time will be measured at 6.(6) microsecond\n    resolution. Also the gettimeofday function itself may take\n    longer to run.\n- If no timers are used, gettimeofday and time functions\n    return -1 and set errno to ENOSYS; they are defined as weak,\n    so they could be overridden.\n    If you want to customize gettimeofday() and other time functions,\n    please choose this option and refer to the 'time.c' source file\n    for the exact prototypes of these functions.\n\n- When RTC is used for timekeeping, two RTC_STORE registers are\n    used to keep time in deep sleep mode.",
-                        "id": "component-config-libc-timers-used-for-gettimeofday-function",
-                        "name": "LIBC_TIME_SYSCALL",
-                        "title": "Timers used for gettimeofday function",
-                        "type": "choice"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": "ESP_ROM_HAS_SUBOPTIMAL_NEWLIB_ON_MISALIGNED_MEMORY",
-                        "help": "Enables performance-optimized implementations of memory and string functions\nwhen handling misaligned memory.\n\nRequire approximately 800\u20131000 bytes of IRAM.\n\nOptimized functions include:\n    - memcpy\n    - memset\n    - memmove\n    - str[n]cpy\n    - str[n]cmp",
-                        "id": "LIBC_OPTIMIZED_MISALIGNED_ACCESS",
-                        "name": "LIBC_OPTIMIZED_MISALIGNED_ACCESS",
-                        "range": null,
-                        "title": "Use performance-optimized memXXX/strXXX functions on misaligned memory access",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": null,
-                        "help": "Size of the buffer used to format assert failure messages.\n\nWhen assertions fail, the system formats a message containing the function name,\nfile name, line number, and the failed expression. This option controls the\nmaximum length of this message.\n\nIf you encounter truncated assert messages (especially with C++ templates or\nlong function names), increase this value. The default value of 200 bytes\nshould be sufficient for most cases, but complex template expressions may\nrequire larger buffers.",
-                        "id": "LIBC_ASSERT_BUFFER_SIZE",
-                        "name": "LIBC_ASSERT_BUFFER_SIZE",
-                        "range": [
-                            100,
-                            2048
-                        ],
-                        "title": "Assert message buffer size",
-                        "type": "int"
-                    }
-                ],
-                "depends_on": null,
-                "id": "component-config-libc",
-                "title": "LibC",
-                "type": "menu"
-            },
-            {
-                "children": [],
-                "depends_on": null,
-                "help": null,
-                "id": "STDATOMIC_S32C1I_SPIRAM_WORKAROUND",
-                "name": "STDATOMIC_S32C1I_SPIRAM_WORKAROUND",
-                "range": null,
-                "title": null,
-                "type": "bool"
-            },
-            {
-                "children": [
-                    {
                         "children": [],
                         "depends_on": null,
                         "help": null,
@@ -7030,6 +6909,103 @@
                 "depends_on": null,
                 "id": "component-config-esp-rom",
                 "title": "ESP-ROM",
+                "type": "menu"
+            },
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [],
+                                                "depends_on": "<choice ESP_CRYPTO_DPA_PROTECTION_LEVEL>",
+                                                "help": null,
+                                                "id": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_LOW",
+                                                "name": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_LOW",
+                                                "range": null,
+                                                "title": "Security level low",
+                                                "type": "bool"
+                                            },
+                                            {
+                                                "children": [],
+                                                "depends_on": "<choice ESP_CRYPTO_DPA_PROTECTION_LEVEL>",
+                                                "help": null,
+                                                "id": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_MEDIUM",
+                                                "name": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_MEDIUM",
+                                                "range": null,
+                                                "title": "Security level medium",
+                                                "type": "bool"
+                                            },
+                                            {
+                                                "children": [],
+                                                "depends_on": "<choice ESP_CRYPTO_DPA_PROTECTION_LEVEL>",
+                                                "help": null,
+                                                "id": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_HIGH",
+                                                "name": "ESP_CRYPTO_DPA_PROTECTION_LEVEL_HIGH",
+                                                "range": null,
+                                                "title": "Security level high",
+                                                "type": "bool"
+                                            }
+                                        ],
+                                        "depends_on": "ESP_CRYPTO_DPA_PROTECTION_AT_STARTUP && SOC_CRYPTO_DPA_PROTECTION_SUPPORTED",
+                                        "help": "Configure the DPA protection security level",
+                                        "id": "component-config-esp-security-specific-crypto-dpa-protection-enable-crypto-dpa-protection-at-startup-dpa-protection-level",
+                                        "name": "ESP_CRYPTO_DPA_PROTECTION_LEVEL",
+                                        "title": "DPA protection level",
+                                        "type": "choice"
+                                    }
+                                ],
+                                "depends_on": "SOC_CRYPTO_DPA_PROTECTION_SUPPORTED",
+                                "help": "This config controls the DPA (Differential Power Analysis) protection\nknob for the crypto peripherals. DPA protection dynamically adjusts\nclock frequency of the crypto peripheral. DPA protection helps to make it\ndifficult to perform SCA attacks on the crypto peripherals. However,\nthere is also associated performance impact based on the security level\nset. Please refer to the TRM for more details.",
+                                "id": "ESP_CRYPTO_DPA_PROTECTION_AT_STARTUP",
+                                "name": "ESP_CRYPTO_DPA_PROTECTION_AT_STARTUP",
+                                "range": null,
+                                "title": "Enable crypto DPA protection at startup",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "SOC_CRYPTO_DPA_PROTECTION_SUPPORTED",
+                                "help": null,
+                                "id": "ESP_CRYPTO_DPA_PROTECTION_LEVEL",
+                                "name": "ESP_CRYPTO_DPA_PROTECTION_LEVEL",
+                                "range": null,
+                                "title": null,
+                                "type": "int"
+                            }
+                        ],
+                        "depends_on": "SOC_CRYPTO_DPA_PROTECTION_SUPPORTED",
+                        "id": "component-config-esp-security-specific-crypto-dpa-protection",
+                        "title": "Crypto DPA Protection",
+                        "type": "menu"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_ECC_CONSTANT_TIME_POINT_MUL",
+                        "help": "If enabled, the app startup code will burn the ECC_FORCE_CONST_TIME efuse bit to force the\nECC peripheral to always perform constant time point multiplication operations,\nirrespective of the ECC_MULT_SECURITY_MODE status bit that is present in the ECC_MULT_CONF_REG\nregister. By default, ESP-IDF configures the ECC peripheral to perform constant time point\nmultiplication operations, so enabling this config would provide security enhancement only in\nthe cases when trusted boot is not enabled and the attacker tries carrying out non-constant\ntime point multiplication operations by changing the default ESP-IDF configurations.\nPerforming constant time operations protect the ECC multiplication operations from timing attacks.",
+                        "id": "ESP_CRYPTO_FORCE_ECC_CONSTANT_TIME_POINT_MUL",
+                        "name": "ESP_CRYPTO_FORCE_ECC_CONSTANT_TIME_POINT_MUL",
+                        "range": null,
+                        "title": "Forcefully enable ECC constant time point multiplication operations",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "SOC_ECDSA_P192_CURVE_DEFAULT_DISABLED",
+                        "help": "By default, only the 256-bit curve operations are allowed. If this configuration is enabled,\nit will set the eFuse to allow ECDSA operations using both the 192-bit and 256-bit curves.",
+                        "id": "ESP_ECDSA_ENABLE_P192_CURVE",
+                        "name": "ESP_ECDSA_ENABLE_P192_CURVE",
+                        "range": null,
+                        "title": "Enable ECDSA 192-curve operations",
+                        "type": "bool"
+                    }
+                ],
+                "depends_on": null,
+                "id": "component-config-esp-security-specific",
+                "title": "ESP Security Specific",
                 "type": "menu"
             },
             {
@@ -7223,7 +7199,7 @@
                     {
                         "children": [],
                         "depends_on": null,
-                        "help": "The following system functions will be placed in IRAM if this option is enabled:\n- system startup\n- system time\n- system error\n- system restart\n- system crosscore\n- system debug\n- system APB backup DMA lock\n- system application tick hook\n- Unified Behavior Sanitizer (UBSAN) hook\n- Interrupt watchdog handler\n- XTAL32K watchdog timer\n- IPC and IPC ISR",
+                        "help": "The following system functions will be placed in IRAM if this option is enabled:\n- system startup\n- system time\n- system error\n- system restart\n- system crosscore\n- system debug\n- system APB backup DMA lock\n- system application tick hook\n- Unified Behavior Sanitizer (UBSAN) hook\n- Interrupt watchdog handler\n- XTAL32K watchdog timer\n- USB CDC functions for the esp_rom_printf (if ESP_CONSOLE_USB_CDC_SUPPORT_ETS_PRINTF=y)\n- IPC and IPC ISR",
                         "id": "ESP_SYSTEM_IN_IRAM",
                         "name": "ESP_SYSTEM_IN_IRAM",
                         "range": null,
@@ -7399,70 +7375,59 @@
                                 "children": [
                                     {
                                         "children": [],
-                                        "depends_on": "SOC_MEMPROT_SUPPORTED && <choice ESP_SYSTEM_MEMPROT_MODE>",
-                                        "help": "This option enables memory protection using the Permission Control Module (PMS).",
-                                        "id": "ESP_SYSTEM_MEMPROT_PMS",
-                                        "name": "ESP_SYSTEM_MEMPROT_PMS",
+                                        "depends_on": "IDF_TARGET_ARCH_RISCV && SOC_LP_CORE_SUPPORTED && ESP_SYSTEM_PMP_IDRAM_SPLIT",
+                                        "help": "If enabled, user can run code available in LP Core image.\n\nWarning: on ESP32-P4 this will also mark the memory area used for BOOTLOADER_RESERVE_RTC_MEM\nas executable. If you consider this a security risk then do not activate this option.",
+                                        "id": "ESP_SYSTEM_PMP_LP_CORE_RESERVE_MEM_EXECUTABLE",
+                                        "name": "ESP_SYSTEM_PMP_LP_CORE_RESERVE_MEM_EXECUTABLE",
                                         "range": null,
-                                        "title": "Enable Permission Control Module (PMS) configurations",
-                                        "type": "bool"
-                                    },
-                                    {
-                                        "children": [],
-                                        "depends_on": "SOC_CPU_IDRAM_SPLIT_USING_PMP && !SECURE_ENABLE_TEE && <choice ESP_SYSTEM_MEMPROT_MODE>",
-                                        "help": "This option enables memory protection using CPU PMP.",
-                                        "id": "ESP_SYSTEM_MEMPROT_PMP",
-                                        "name": "ESP_SYSTEM_MEMPROT_PMP",
-                                        "range": null,
-                                        "title": "Enable CPU's Physical Memory Protection (PMP) configurations",
-                                        "type": "bool"
-                                    },
-                                    {
-                                        "children": [],
-                                        "depends_on": "SECURE_ENABLE_TEE && <choice ESP_SYSTEM_MEMPROT_MODE>",
-                                        "help": "This option enables the default memory protection provided by TEE.",
-                                        "id": "ESP_SYSTEM_MEMPROT_TEE",
-                                        "name": "ESP_SYSTEM_MEMPROT_TEE",
-                                        "range": null,
-                                        "title": "Enable Trusted Execution Environment (TEE) configurations",
+                                        "title": "Make LP core reserved memory executable from HP core",
                                         "type": "bool"
                                     }
                                 ],
-                                "depends_on": "ESP_SYSTEM_MEMPROT",
-                                "help": null,
-                                "id": "component-config-esp-system-settings-enable-memory-protection-memory-protection-configurations",
-                                "name": "ESP_SYSTEM_MEMPROT_MODE",
-                                "title": "Memory Protection configurations",
-                                "type": "choice"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "ESP_SYSTEM_MEMPROT && ESP_SYSTEM_MEMPROT_PMS",
-                                "help": "Once locked, memory protection settings cannot be changed anymore.\nThe lock is reset only on the chip startup.",
-                                "id": "ESP_SYSTEM_MEMPROT_PMS_LOCK",
-                                "name": "ESP_SYSTEM_MEMPROT_PMS_LOCK",
+                                "depends_on": "SOC_CPU_IDRAM_SPLIT_USING_PMP && !SECURE_ENABLE_TEE",
+                                "help": "If enabled, the CPU watches all the memory access and raises an exception in case\nof any memory violation. This feature automatically splits\nthe SRAM memory, using PMP, into data and instruction segments and sets Read/Execute permissions\nfor the instruction part (below given splitting address) and Read/Write permissions\nfor the data part (above the splitting address). The memory protection is effective\non all access through the IRAM0 and DRAM0 buses.",
+                                "id": "ESP_SYSTEM_PMP_IDRAM_SPLIT",
+                                "name": "ESP_SYSTEM_PMP_IDRAM_SPLIT",
                                 "range": null,
-                                "title": "Lock memory protection settings",
+                                "title": "Enable IRAM/DRAM split protection",
                                 "type": "bool"
                             },
                             {
                                 "children": [],
-                                "depends_on": "ESP_SYSTEM_MEMPROT && IDF_TARGET_ARCH_RISCV && SOC_LP_CORE_SUPPORTED && ESP_SYSTEM_MEMPROT_PMP",
-                                "help": "If enabled, user can run code available in LP Core image.\n\nWarning: on ESP32-P4 this will also mark the memory area used for BOOTLOADER_RESERVE_RTC_MEM\nas executable. If you consider this a security risk then do not activate this option.",
-                                "id": "ESP_SYSTEM_MEMPROT_PMP_LP_CORE_RESERVE_MEM_EXEC",
-                                "name": "ESP_SYSTEM_MEMPROT_PMP_LP_CORE_RESERVE_MEM_EXEC",
+                                "depends_on": "SECURE_ENABLE_TEE",
+                                "help": "This option enables the default memory protection provided by TEE.",
+                                "id": "ESP_SYSTEM_MEMPROT_FEATURE_VIA_TEE",
+                                "name": "ESP_SYSTEM_MEMPROT_FEATURE_VIA_TEE",
                                 "range": null,
-                                "title": "Make LP core reserved memory executable from HP core",
+                                "title": "Enable memory protection (via TEE)",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "ESP_SYSTEM_MEMPROT_FEATURE",
+                                        "help": "Once locked, memory protection settings cannot be changed anymore.\nThe lock is reset only on the chip startup.",
+                                        "id": "ESP_SYSTEM_MEMPROT_FEATURE_LOCK",
+                                        "name": "ESP_SYSTEM_MEMPROT_FEATURE_LOCK",
+                                        "range": null,
+                                        "title": "Lock memory protection settings",
+                                        "type": "bool"
+                                    }
+                                ],
+                                "depends_on": "SOC_MEMPROT_SUPPORTED",
+                                "help": "If enabled, the permission control module watches all the memory access and fires the panic handler\nif a permission violation is detected. This feature automatically splits\nthe SRAM memory into data and instruction segments and sets Read/Execute permissions\nfor the instruction part (below given splitting address) and Read/Write permissions\nfor the data part (above the splitting address). The memory protection is effective\non all access through the IRAM0 and DRAM0 buses.",
+                                "id": "ESP_SYSTEM_MEMPROT_FEATURE",
+                                "name": "ESP_SYSTEM_MEMPROT_FEATURE",
+                                "range": null,
+                                "title": "Enable memory protection",
                                 "type": "bool"
                             }
                         ],
-                        "depends_on": "SOC_CPU_IDRAM_SPLIT_USING_PMP || SECURE_ENABLE_TEE || SOC_MEMPROT_SUPPORTED",
-                        "help": "This option enables memory protection for the valid memory regions.\nThis feature also automatically splits the ROM, RAM and flash memory into data and\ninstruction segments and sets Read/Execute permissions for the instruction part\n(below given splitting address) and Read/Write permissions for the data part\n(above the splitting address). The memory protection is effective on all access\nthrough the IRAM0 and DRAM0 buses.",
-                        "id": "ESP_SYSTEM_MEMPROT",
-                        "name": "ESP_SYSTEM_MEMPROT",
-                        "range": null,
-                        "title": "Enable memory protection",
-                        "type": "bool"
+                        "depends_on": null,
+                        "id": "component-config-esp-system-settings-memory-protection",
+                        "title": "Memory protection",
+                        "type": "menu"
                     },
                     {
                         "children": [],
@@ -8037,7 +8002,7 @@
                 "children": [
                     {
                         "children": [],
-                        "depends_on": null,
+                        "depends_on": "!ESP_SYSTEM_SINGLE_CORE_MODE || APPTRACE_GCOV_ENABLE",
                         "help": null,
                         "id": "ESP_IPC_ENABLE",
                         "name": "ESP_IPC_ENABLE",
@@ -8090,7 +8055,7 @@
                         "children": [
                             {
                                 "children": [],
-                                "depends_on": "!IDF_TARGET_ESP32P4 && !IDF_TARGET_ESP32H4",
+                                "depends_on": "!IDF_TARGET_ESP32P4",
                                 "help": "Amazon has released an SMP version of the FreeRTOS Kernel which can be found via the following link:\nhttps://github.com/FreeRTOS/FreeRTOS-Kernel/tree/smp\n\nIDF has added an experimental port of this SMP kernel located in\ncomponents/freertos/FreeRTOS-Kernel-SMP. Enabling this option will cause IDF to use the Amazon SMP\nkernel. Note that THIS FEATURE IS UNDER ACTIVE DEVELOPMENT, users use this at their own risk.\n\nLeaving this option disabled will mean the IDF FreeRTOS kernel is used instead, which is located in:\ncomponents/freertos/FreeRTOS-Kernel. Both kernel versions are SMP capable, but differ in\ntheir implementation and features.",
                                 "id": "FREERTOS_SMP",
                                 "name": "FREERTOS_SMP",
@@ -8721,23 +8686,24 @@
                                 "type": "choice"
                             },
                             {
-                                "children": [],
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "depends_on": "SPI_FLASH_AUTO_SUSPEND && FREERTOS_PLACE_FUNCTIONS_INTO_FLASH",
+                                        "help": "When enabled additional FreeRTOS functions which maybe called from an ISR context are\nalso placed in Flash, thus freeing up more IRAM.\nThis option is only applicable when the SPI_FLASH_AUTO_SUSPEND feature is supported.",
+                                        "id": "FREERTOS_PLACE_ISR_FUNCTIONS_INTO_FLASH",
+                                        "name": "FREERTOS_PLACE_ISR_FUNCTIONS_INTO_FLASH",
+                                        "range": null,
+                                        "title": "Place FreeRTOS functions called from ISR context into Flash",
+                                        "type": "bool"
+                                    }
+                                ],
                                 "depends_on": null,
-                                "help": "Place FreeRTOS functions in IRAM for better performance.\nBy default, FreeRTOS functions are placed in Flash to save IRAM.\nEnable this option if you need maximum performance for FreeRTOS operations.\n\nNote: This option increases IRAM usage.",
-                                "id": "FREERTOS_IN_IRAM",
-                                "name": "FREERTOS_IN_IRAM",
+                                "help": "When enabled the selected Non-ISR FreeRTOS functions will be placed into Flash memory instead of IRAM.\nThis saves up to 8KB of IRAM depending on which functions are used.",
+                                "id": "FREERTOS_PLACE_FUNCTIONS_INTO_FLASH",
+                                "name": "FREERTOS_PLACE_FUNCTIONS_INTO_FLASH",
                                 "range": null,
-                                "title": "Place FreeRTOS functions in IRAM",
-                                "type": "bool"
-                            },
-                            {
-                                "children": [],
-                                "depends_on": "SPI_FLASH_AUTO_SUSPEND",
-                                "help": "When enabled additional FreeRTOS functions which maybe called from an ISR context are\nalso placed in Flash, thus freeing up more IRAM.\nThis option is only applicable when the SPI_FLASH_AUTO_SUSPEND feature is supported.",
-                                "id": "FREERTOS_PLACE_ISR_FUNCTIONS_INTO_FLASH",
-                                "name": "FREERTOS_PLACE_ISR_FUNCTIONS_INTO_FLASH",
-                                "range": null,
-                                "title": "Place FreeRTOS functions called from ISR context into Flash",
+                                "title": "Place FreeRTOS functions into Flash",
                                 "type": "bool"
                             },
                             {
@@ -8818,6 +8784,26 @@
                         "children": [],
                         "depends_on": null,
                         "help": null,
+                        "id": "FREERTOS_ENABLE_TASK_SNAPSHOT",
+                        "name": "FREERTOS_ENABLE_TASK_SNAPSHOT",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "!ESP_PANIC_HANDLER_IRAM",
+                        "help": null,
+                        "id": "FREERTOS_PLACE_SNAPSHOT_FUNS_INTO_FLASH",
+                        "name": "FREERTOS_PLACE_SNAPSHOT_FUNS_INTO_FLASH",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": null,
                         "id": "FREERTOS_NUMBER_OF_CORES",
                         "name": "FREERTOS_NUMBER_OF_CORES",
                         "range": [
@@ -8826,6 +8812,16 @@
                         ],
                         "title": null,
                         "type": "int"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": null,
+                        "id": "FREERTOS_IN_IRAM",
+                        "name": "FREERTOS_IN_IRAM",
+                        "range": null,
+                        "title": null,
+                        "type": "bool"
                     }
                 ],
                 "depends_on": null,
@@ -8993,16 +8989,6 @@
                         "name": "HAL_WDT_USE_ROM_IMPL",
                         "range": null,
                         "title": "Use ROM implementation of WDT HAL driver",
-                        "type": "bool"
-                    },
-                    {
-                        "children": [],
-                        "depends_on": null,
-                        "help": "Enable this flag to use HAL functions from ROM when applicable instead of ESP-IDF.\n\nIf keeping this as \"n\" in your project, you will have less free IRAM.\nWhen compiling an application for a CPU that cannot access to the ROM memory,\nthis option should be disabled.",
-                        "id": "HAL_GPIO_USE_ROM_IMPL",
-                        "name": "HAL_GPIO_USE_ROM_IMPL",
-                        "range": null,
-                        "title": "Use ROM implementation of GPIO HAL driver",
                         "type": "bool"
                     },
                     {
@@ -9510,6 +9496,224 @@
                 "id": "component-config-log",
                 "title": "Log",
                 "type": "menu"
+            },
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC>",
+                                "help": null,
+                                "id": "LIBC_NEWLIB",
+                                "name": "LIBC_NEWLIB",
+                                "range": null,
+                                "title": "NewLib",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "!IDF_TOOLCHAIN_CLANG && IDF_EXPERIMENTAL_FEATURES && <choice LIBC>",
+                                "help": null,
+                                "id": "LIBC_PICOLIBC",
+                                "name": "LIBC_PICOLIBC",
+                                "range": null,
+                                "title": "Picolibc (EXPERIMENTAL)",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "help": null,
+                        "id": "component-config-libc-libc-to-build-application-with",
+                        "name": "LIBC",
+                        "title": "LibC to build application with",
+                        "type": "choice"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": null,
+                        "help": null,
+                        "id": "LIBC_MISC_IN_IRAM",
+                        "name": "LIBC_MISC_IN_IRAM",
+                        "range": null,
+                        "title": "Place misc libc functions (abort/assert/stdatomics) in IRAM",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "LIBC_NEWLIB",
+                        "help": "Enable this option to include be able to call the lock API from\ncode that runs while cache is disabled, e.g. IRAM interrupts.",
+                        "id": "LIBC_LOCKS_PLACE_IN_IRAM",
+                        "name": "LIBC_LOCKS_PLACE_IN_IRAM",
+                        "range": null,
+                        "title": "Place lock API in IRAM",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDOUT_LINE_ENDING_CRLF",
+                                "name": "LIBC_STDOUT_LINE_ENDING_CRLF",
+                                "range": null,
+                                "title": "CRLF",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDOUT_LINE_ENDING_LF",
+                                "name": "LIBC_STDOUT_LINE_ENDING_LF",
+                                "range": null,
+                                "title": "LF",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDOUT_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDOUT_LINE_ENDING_CR",
+                                "name": "LIBC_STDOUT_LINE_ENDING_CR",
+                                "range": null,
+                                "title": "CR",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": "VFS_SUPPORT_IO",
+                        "help": "This option allows configuring the desired line endings sent to console\nwhen a newline ('\\n', LF) appears on stdout.\nThree options are possible:\n\nCRLF: whenever LF is encountered, prepend it with CR\n\nLF: no modification is applied, stdout is sent as is\n\nCR: each occurrence of LF is replaced with CR\n\nThis option doesn't affect behavior of the UART driver (drivers/uart.h).",
+                        "id": "component-config-libc-line-ending-for-console-output",
+                        "name": "LIBC_STDOUT_LINE_ENDING",
+                        "title": "Line ending for console output",
+                        "type": "choice"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDIN_LINE_ENDING_CRLF",
+                                "name": "LIBC_STDIN_LINE_ENDING_CRLF",
+                                "range": null,
+                                "title": "CRLF",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDIN_LINE_ENDING_LF",
+                                "name": "LIBC_STDIN_LINE_ENDING_LF",
+                                "range": null,
+                                "title": "LF",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_STDIN_LINE_ENDING>",
+                                "help": null,
+                                "id": "LIBC_STDIN_LINE_ENDING_CR",
+                                "name": "LIBC_STDIN_LINE_ENDING_CR",
+                                "range": null,
+                                "title": "CR",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": "VFS_SUPPORT_IO",
+                        "help": "This option allows configuring which input sequence on console produces\na newline ('\\n', LF) on stdin.\nThree options are possible:\n\nCRLF: CRLF is converted to LF\n\nLF: no modification is applied, input is sent to stdin as is\n\nCR: each occurrence of CR is replaced with LF\n\nThis option doesn't affect behavior of the UART driver (drivers/uart.h).",
+                        "id": "component-config-libc-line-ending-for-console-input",
+                        "name": "LIBC_STDIN_LINE_ENDING",
+                        "title": "Line ending for console input",
+                        "type": "choice"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "LIBC_NEWLIB",
+                        "help": "In most chips the ROM contains parts of newlib C library, including printf/scanf family\nof functions. These functions have been compiled with so-called \"nano\"\nformatting option. This option doesn't support 64-bit integer formats and C99\nfeatures, such as positional arguments.\n\nFor more details about \"nano\" formatting option, please see newlib readme file,\nsearch for '--enable-newlib-nano-formatted-io':\nhttps://sourceware.org/git/?p=newlib-cygwin.git;a=blob_plain;f=newlib/README;hb=HEAD\n\nIf this option is enabled and the ROM contains functions from newlib-nano, the build system\nwill use functions available in ROM, reducing the application binary size.\nFunctions available in ROM run faster than functions which run from flash. Functions available\nin ROM can also run when flash instruction cache is disabled.\n\nSome chips (e.g. ESP32-C6) has the full formatting versions of printf/scanf in ROM instead of\nthe nano versions and in this building with newlib nano might actually increase the size of\nthe binary. Which functions are present in ROM can be seen from ROM caps:\nESP_ROM_HAS_NEWLIB_NANO_FORMAT and ESP_ROM_HAS_NEWLIB_NORMAL_FORMAT.\n\nIf you need 64-bit integer formatting support or C99 features, keep this\noption disabled.",
+                        "id": "LIBC_NEWLIB_NANO_FORMAT",
+                        "name": "LIBC_NEWLIB_NANO_FORMAT",
+                        "range": null,
+                        "title": "Enable 'nano' formatting options for printf/scanf family",
+                        "type": "bool"
+                    },
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
+                                "help": null,
+                                "id": "LIBC_TIME_SYSCALL_USE_RTC_HRT",
+                                "name": "LIBC_TIME_SYSCALL_USE_RTC_HRT",
+                                "range": null,
+                                "title": "RTC and high-resolution timer",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
+                                "help": null,
+                                "id": "LIBC_TIME_SYSCALL_USE_RTC",
+                                "name": "LIBC_TIME_SYSCALL_USE_RTC",
+                                "range": null,
+                                "title": "RTC",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
+                                "help": null,
+                                "id": "LIBC_TIME_SYSCALL_USE_HRT",
+                                "name": "LIBC_TIME_SYSCALL_USE_HRT",
+                                "range": null,
+                                "title": "High-resolution timer",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
+                                "depends_on": "<choice LIBC_TIME_SYSCALL>",
+                                "help": null,
+                                "id": "LIBC_TIME_SYSCALL_USE_NONE",
+                                "name": "LIBC_TIME_SYSCALL_USE_NONE",
+                                "range": null,
+                                "title": "None",
+                                "type": "bool"
+                            }
+                        ],
+                        "depends_on": null,
+                        "help": "This setting defines which hardware timers are used to\nimplement 'gettimeofday' and 'time' functions in C library.\n\n- If both high-resolution (systimer for all targets except ESP32)\n    and RTC timers are used, timekeeping will continue in deep sleep.\n    Time will be reported at 1 microsecond resolution.\n    This is the default, and the recommended option.\n- If only high-resolution timer (systimer) is used, gettimeofday will\n    provide time at microsecond resolution.\n    Time will not be preserved when going into deep sleep mode.\n- If only RTC timer is used, timekeeping will continue in\n    deep sleep, but time will be measured at 6.(6) microsecond\n    resolution. Also the gettimeofday function itself may take\n    longer to run.\n- If no timers are used, gettimeofday and time functions\n    return -1 and set errno to ENOSYS; they are defined as weak,\n    so they could be overridden.\n    If you want to customize gettimeofday() and other time functions,\n    please choose this option and refer to the 'time.c' source file\n    for the exact prototypes of these functions.\n\n- When RTC is used for timekeeping, two RTC_STORE registers are\n    used to keep time in deep sleep mode.",
+                        "id": "component-config-libc-timers-used-for-gettimeofday-function",
+                        "name": "LIBC_TIME_SYSCALL",
+                        "title": "Timers used for gettimeofday function",
+                        "type": "choice"
+                    },
+                    {
+                        "children": [],
+                        "depends_on": "ESP_ROM_HAS_SUBOPTIMAL_NEWLIB_ON_MISALIGNED_MEMORY",
+                        "help": "Enables performance-optimized implementations of memory and string functions\nwhen handling misaligned memory.\n\nThis increases the image size by ~1000 bytes.\n\nOptimized functions include:\n    - memcpy\n    - memset\n    - memmove\n    - str[n]cpy\n    - str[n]cmp",
+                        "id": "LIBC_OPTIMIZED_MISALIGNED_ACCESS",
+                        "name": "LIBC_OPTIMIZED_MISALIGNED_ACCESS",
+                        "range": null,
+                        "title": "Use performance-optimized memXXX/strXXX functions on misaligned memory access",
+                        "type": "bool"
+                    }
+                ],
+                "depends_on": null,
+                "id": "component-config-libc",
+                "title": "LibC",
+                "type": "menu"
+            },
+            {
+                "children": [],
+                "depends_on": null,
+                "help": null,
+                "id": "STDATOMIC_S32C1I_SPIRAM_WORKAROUND",
+                "name": "STDATOMIC_S32C1I_SPIRAM_WORKAROUND",
+                "range": null,
+                "title": null,
+                "type": "bool"
             },
             {
                 "children": [
@@ -10174,7 +10378,7 @@
     {
         "children": [],
         "depends_on": null,
-        "help": "By enabling this option, ESP-IDF experimental feature options will be visible.\n\nNote you should still enable a certain experimental feature option to use it, and you\nshould read the corresponding risk warning and known issue list carefully.\n\nCurrent experimental feature list:\n\n- CONFIG_ESPTOOLPY_FLASHFREQ_120M && CONFIG_ESPTOOLPY_FLASH_SAMPLE_MODE_DTR\n- CONFIG_SPIRAM_SPEED_120M && CONFIG_SPIRAM_MODE_OCT\n- CONFIG_BOOTLOADER_CACHE_32BIT_ADDR_QUAD_FLASH\n- CONFIG_ESP_WIFI_EAP_TLS1_3\n- CONFIG_ESP_WIFI_ENABLE_ROAMING_APP\n- CONFIG_USB_HOST_EXT_PORT_RESET_ATTEMPTS\n- CONFIG_LIBC_PICOLIBC\n- CONFIG_GDMA_ENABLE_WEIGHTED_ARBITRATION\n- CONFIG_I3C_MASTER_ENABLED",
+        "help": "By enabling this option, ESP-IDF experimental feature options will be visible.\n\nNote you should still enable a certain experimental feature option to use it, and you\nshould read the corresponding risk warning and known issue list carefully.\n\nCurrent experimental feature list:\n\n- CONFIG_ESPTOOLPY_FLASHFREQ_120M && CONFIG_ESPTOOLPY_FLASH_SAMPLE_MODE_DTR\n- CONFIG_SPIRAM_SPEED_120M && CONFIG_SPIRAM_MODE_OCT\n- CONFIG_BOOTLOADER_CACHE_32BIT_ADDR_QUAD_FLASH\n- CONFIG_ESP_WIFI_EAP_TLS1_3\n- CONFIG_ESP_WIFI_ENABLE_ROAMING_APP\n- CONFIG_USB_HOST_EXT_PORT_RESET_ATTEMPTS\n- CONFIG_LIBC_PICOLIBC",
         "id": "IDF_EXPERIMENTAL_FEATURES",
         "name": "IDF_EXPERIMENTAL_FEATURES",
         "range": null,

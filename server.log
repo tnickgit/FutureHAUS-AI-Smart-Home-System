@@ -1,0 +1,9 @@
+2026-02-26 16:18:44,387 | INFO | websockets.server | server listening on 0.0.0.0:8765
+2026-02-26 16:19:08,430 | INFO | websockets.server | server closing
+2026-02-26 16:19:08,431 | INFO | websockets.server | server closed
+2026-02-26 16:19:32,243 | INFO | websockets.server | server listening on 0.0.0.0:8765
+2026-02-26 16:19:37,561 | INFO | websockets.server | server closing
+2026-02-26 16:19:37,561 | INFO | websockets.server | server closed
+2026-02-26 17:07:25,611 | INFO | websockets.server | server listening on 0.0.0.0:8765
+2026-02-26 17:07:29,220 | INFO | websockets.server | server closing
+2026-02-26 17:07:29,221 | INFO | websockets.server | server closed
