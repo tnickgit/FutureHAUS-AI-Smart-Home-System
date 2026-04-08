@@ -25,6 +25,9 @@ ROOT_ID: str | None = None
 IPAD_SRC = None
 IPAD_ID = None
 
+FAN_NODE = None
+LIGHT_NODE = None
+
 rows = 5
 columns = 1000
 database = [[0 for _ in range(columns)] for _ in range(rows)]
@@ -76,17 +79,20 @@ def place_data(CS: int, data: Any, time: str) -> None:
 def store_json_commands(incoming_data: Any):
     try:
         with open(database_file, "r") as db:
-            data = db.readlines()
-    except FileNotFoundError:
+            data = json.load(db)
+    except (FileNotFoundError, json.JSONDecodeError):
         data = []
-    
-    data.append(json.dumps(incoming_data) + "\n")
 
+    # append actual object (NOT string)
+    data.append(incoming_data)
+
+    # keep only last MAX_RECORDS
     if len(data) > MAX_RECORDS:
-        data = data[~MAX_RECORDS]
-    
+        data = data[-MAX_RECORDS:]
+
+    # write proper JSON
     with open(database_file, "w") as db:
-        db.write(str(data))
+        json.dump(data, db, indent=2)
 
 
 def get_root_ws() -> WebSocketServerProtocol | None:
@@ -171,6 +177,7 @@ async def handle_temp_data(src_id, data, time):
     # store_json_commands(send_data)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
+    store_json_commands(data)
 
 
 
@@ -185,34 +192,43 @@ async def handle_light_data(src_id, data, time):
         logger.info(f"could not convert lux to float from {src_id}: {lux_data}")
         return
 
-    send_data_ai = {
-            "type": "light",
-            "timestamp": str(datetime.now().strftime("&Y-&m-&d &H:&M:&S")),
-            "lux": float(lux_value)
-    }
 
     isOn = data.get("isOn")
     send_data_client = {}
     if (isOn == True):
+        logger.info("The light is on")
         send_data_client = {
-            "target": src_id,
+            "target": LIGHT_NODE,
             "cmd": "LIGHT_ON",
-            "timestamp": str(datetime.now().strftime("&Y-&m-&d &H:&M:&S")),
+            "timestamp": int(datetime.now().timestamp() * 1000),
             "value": isOn
+        }
+        send_data_ai = {
+            "type": "lux",
+            "timestamp": int(datetime.now().timestamp() * 1000),
+            "lux": float(lux_value),
+            "command": "Light_On"
         }
         logger.info(f"Brightness is {lux_data}")
     else:
+        logger.info("The light is off")
         send_data_client = {
-            "target": src_id,
+            "target": LIGHT_NODE,
             "cmd": "LIGHT_OFF",
-            "timestamp": str(datetime.now().strftime("&Y-&m-&d &H:&M:&S")),
+            "timestamp": int(datetime.now().timestamp() * 1000),
             "value": isOn
+        }
+        send_data_ai = {
+            "type": "lux",
+            "timestamp": int(datetime.now().timestamp() * 1000),
+            "lux": float(lux_value),
+            "command": "Light_Off"
         }
         logger.info(f"Brightness is {lux_data}")
 
     # this is sending data to the display
     send_data_display = {
-        "src_id": src_id,
+        "src_id": LIGHT_NODE,
         "mode": "SEND_DATA",
         "node_type": "SENSOR",
         "sensor_type": 1,
@@ -229,14 +245,6 @@ async def handle_light_data(src_id, data, time):
         return
 
     try:
-        await target_ws.send(json.dumps(send_data_client))
-    except ConnectionClosed:
-        logger.info(f"{src_id} connection has disconnected")
-        CLIENTS.pop(src_id, None)
-    except Exception as e:
-        logger.info("could not send data")
-
-    try:
         logger.info(f"sent the data to the IPad to display")
         # this will send the data back to the IPad to display on the GUI
         await IPAD_ID.send(json.dumps(send_data_display))
@@ -244,11 +252,18 @@ async def handle_light_data(src_id, data, time):
         logger.info(f"Ipad is not connected")
     except Exception as e:
         logger.info("info could not be sent to IPAD")
+    
+    try:
+        await target_ws.send(json.dumps(send_data_client))
+    except ConnectionClosed:
+        logger.info(f"{src_id} connection has disconnected")
+        CLIENTS.pop(src_id, None)
+    except Exception as e:
+        logger.info("could not send data")
 
-    # this will store the data in json file so the AI can use for later
-    store_json_commands(send_data_client)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
+    store_json_commands(data)
 
 
 # HANDLERS THAT ONLY SEND BACK TO THE AI
@@ -299,7 +314,7 @@ async def handle_motion_data(src_id, data, time):
         logger.info("info could not be sent to IPAD")
 
     # this will store the data in json file so the AI can use for later
-    store_json_commands(send_data_ai)
+    store_json_commands(data)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
 
@@ -344,7 +359,7 @@ async def handle_water_data(src_id, data, time):
         logger.info("info could not be sent to IPAD")
 
     # this will store the data in json file so the AI can use for later
-    store_json_commands(send_data_ai)
+    store_json_commands(data)
     # this sends the data to the ai model and logs what happens
     process_sensor_update(send_data_ai)
     result = get_water_totals()
@@ -388,7 +403,7 @@ async def handle_electric_data(src_id, data, time):
         logger.info("info could not be sent to IPAD")
 
     # this will store the data in json file so the AI can use for later
-    store_json_commands(send_data_ai)
+    store_json_commands(data)
     # this sends the data to the ai model and logs what happens
     give_data_to_ai(send_data_ai)
 
@@ -398,6 +413,7 @@ async def handle_electric_data(src_id, data, time):
 
 # this function will interpret the JSON file and then place the data accordingly using place data function
 async def handle_sensor_data(msg: dict) -> None:
+    global LIGHT_NODE
     SRC_ID = msg.get("src_id")
     NODE_TYPE = msg.get("sensor_type")
     TIMESTAMP = msg.get("timestamp")
@@ -421,6 +437,9 @@ async def handle_sensor_data(msg: dict) -> None:
 
     elif NODE_TYPE == LIGHT:
         logger.info(f"Light: Recieved Data")
+        if LIGHT_NODE is None:
+            logger.info(f"the LIGHT_NODE is {msg.get("src_id")}")
+            LIGHT_NODE = msg.get("src_id")
         place_data(LIGHT, DATA, TIMESTAMP)
         await handle_light_data(SRC_ID, DATA, TIMESTAMP)
 
@@ -440,6 +459,13 @@ async def handle_message(ws: WebSocketServerProtocol, msg: dict) -> None:
     # await handle_sensor_data(msg)
     if mtype == "SENSOR":
         await handle_sensor_data(msg)
+    # this will handle whether a command comes from the ipad display then it will process that information
+    elif mtype == "COMMAND":
+        SRC_ID = msg.get("src_id")
+        DATA = msg.get("data")
+        if SRC_ID == "Light_Node":
+            logger.info("Recieved command for Light")
+            await handle_light_data(SRC_ID, DATA, time=datetime.now())
 
 
 async def handler(ws: WebSocketServerProtocol) -> None:
@@ -465,7 +491,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
                 IPAD_ID = ws
                 IPAD_SRC = msg.get("src_id")
                 logger.info(f"ipad is connected to the server: {IPAD_SRC}")
-            elif node_id is None and msg.get("src_id") and msg.get("isRoot") == True:
+            elif node_id is None and msg.get("src_id") and msg.get("isRoot") == True and IPAD_ID is not None:
                 logger.info("root is connecting")
                 node_id = msg["src_id"]
                 CLIENTS[node_id] = ws
@@ -478,7 +504,7 @@ async def handler(ws: WebSocketServerProtocol) -> None:
             if ROOT_ID is not None:
                 await handle_message(ws, msg)
     except ConnectionClosed:
-        pass
+        logger.info(f"connection closed for ws={ws}: {e}")
     except Exception as e:
         print(f"connection error was closed with {node_id} = {e}")
     finally:
@@ -487,6 +513,12 @@ async def handler(ws: WebSocketServerProtocol) -> None:
         if ROOT_WS is ws:
             ROOT_WS = None
             ROOT_ID = None
+            node_id = None
+            logger.info("root disconnected")
+        if IPAD_ID is ws:
+            IPAD_ID = None
+            IPAD_SRC = None
+            logger.info("iPad disconnected")
 def setup_logging():
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
