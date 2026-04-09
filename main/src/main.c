@@ -27,7 +27,7 @@
 /******************************************************/
 
 /************* EDIT THIS FOR SENSOR TYPE  *************/
-#define NODE_TYPE   SENSOR_TYPE_TEMP //change to whatever needed
+#define NODE_TYPE   SENSOR_TYPE_POWER //change to whatever needed
 /******************************************************/  
 
 //node data
@@ -166,9 +166,47 @@ void mesh_rx_task(void *arg) {
             } 
             //send to child process data
             else {
-                //child nodes process their own JSON
-                if (!process_json_data(&sensor_node, (char*)data.data)) {
-                    ESP_LOGW("NODE_RECV", "Received unknown or malformed command");
+                // Check for REGISTER command before handing off to sensor logic
+                cJSON *msg = cJSON_Parse((char *)data.data);
+                if (msg) {
+                    cJSON *cmd_item = cJSON_GetObjectItem(msg, "cmd");
+                    if (cJSON_IsString(cmd_item) &&
+                        strcmp(cmd_item->valuestring, "REGISTER") == 0) {
+
+                        // Reply immediately with identity so root can populate its table
+                        sensorNode_package_data(&sensor_node); // ensure jsonPayload is fresh
+                        // Build a minimal registration packet with src_id + sensor_type
+                        cJSON *reg = cJSON_CreateObject();
+                        cJSON_AddStringToObject(reg, "src_id", macStr);
+                        cJSON_AddNumberToObject(reg, "sensor_type", (double)NODE_TYPE);
+                        cJSON_AddStringToObject(reg, "event", "REGISTER");
+                        char *reg_str = cJSON_PrintUnformatted(reg);
+                        cJSON_Delete(reg);
+
+                        if (reg_str) {
+                            mesh_data_t reply = {
+                                .data  = (uint8_t *)reg_str,
+                                .size  = (uint16_t)(strlen(reg_str) + 1),
+                                .proto = MESH_PROTO_BIN,
+                                .tos   = MESH_TOS_P2P
+                            };
+                            // Send to root (NULL = root)
+                            esp_err_t err = esp_mesh_send(NULL, &reply, 0, NULL, 0);
+                            if (err == ESP_OK)
+                                ESP_LOGI("NODE_REG", "Registration sent to root");
+                            else
+                                ESP_LOGW("NODE_REG", "Registration send failed: %s", esp_err_to_name(err));
+                            free(reg_str);
+                        }
+                        cJSON_Delete(msg);
+                    } else {
+                        cJSON_Delete(msg);
+                        if (!process_json_data(&sensor_node, (char *)data.data)) {
+                            ESP_LOGW("NODE_RECV", "Received unknown or malformed command");
+                        }
+                    }
+                } else {
+                    ESP_LOGW("NODE_RECV", "Failed to parse incoming JSON");
                 }
             }
         }
@@ -199,15 +237,31 @@ void process_root_rx(mesh_addr_t *from, uint8_t *payload) {
     }
 }
 
+//transmission task within mesh
 static void mesh_tx_task(void *arg) {
     TickType_t last_root_poll = 0;
-
+    u_int16_t delay_tx_time;
+    switch(NODE_TYPE){
+        case SENSOR_TYPE_MOTION:
+            delay_tx_time = 3000;
+            break;
+        case SENSOR_TYPE_POWER:
+            delay_tx_time = 60000;
+            break;
+        case SENSOR_TYPE_WATER:
+            delay_tx_time = 10000;
+            break;
+        default:
+            delay_tx_time = 10000;
+            break;
+        
+    }
     for (;;) {
         //CHILD NODES
         if (s_is_root && s_mesh_started) {
             //self poll 10s
             TickType_t now = xTaskGetTickCount();
-            if ((now - last_root_poll) >= pdMS_TO_TICKS(10000)) {
+            if ((now - last_root_poll) >= pdMS_TO_TICKS(delay_tx_time)) {
                 last_root_poll = now;
                 sensor_node.polled = true;
                 //check for timeout manually since the event handler is busted or something
@@ -319,9 +373,37 @@ static void mesh_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
             ESP_LOGW(TAG, "Parent disconnected.");
             break;
 
-        case MESH_EVENT_CHILD_CONNECTED:
+        case MESH_EVENT_CHILD_CONNECTED: {
+            mesh_event_child_connected_t *child_info =
+                (mesh_event_child_connected_t *)event_data;
             ESP_LOGI(TAG, "child connected (total=%d)", esp_mesh_get_total_node_num());
+
+            // Root sends REGISTER to every newly connected child.
+            // ESP-MESH routes P2P transparently, so this works even if the
+            // child connected to an intermediate node, not directly to root.
+            if (esp_mesh_is_root()) {
+                mesh_addr_t child_addr;
+                memcpy(child_addr.addr, child_info->mac, 6);
+
+                char cmd[] = "{\"cmd\":\"REGISTER\"}";
+                mesh_data_t reg_data = {
+                    .data  = (uint8_t *)cmd,
+                    .size  = strlen(cmd) + 1,
+                    .proto = MESH_PROTO_BIN,
+                    .tos   = MESH_TOS_P2P
+                };
+                esp_err_t err = esp_mesh_send(&child_addr, &reg_data, MESH_DATA_P2P, NULL, 0);
+                if (err == ESP_OK) {
+                    char mac_log[18];
+                    snprintf(mac_log, sizeof(mac_log), MACSTR, MAC2STR(child_info->mac));
+                    ESP_LOGI(TAG, "REGISTER sent to new child %s", mac_log);
+                } else {
+                    ESP_LOGW(TAG, "REGISTER send failed: %s (0x%x)",
+                            esp_err_to_name(err), err);
+                }
+            }
             break;
+        }
 
         case MESH_EVENT_CHILD_DISCONNECTED:
             ESP_LOGI(TAG, "child disconnected (total=%d)", esp_mesh_get_total_node_num());

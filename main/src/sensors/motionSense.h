@@ -20,7 +20,7 @@
 #define PAUSE_TIME_MS   5000
 
 // Calibration time in seconds (PIR warm-up)
-#define CALIBRATION_SEC 30
+#define CALIBRATION_SEC 15
 
 // Struct mirrors the Arduino sketch's globals, kept together per project style
 struct _motionSense {
