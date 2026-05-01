@@ -9,6 +9,7 @@ Make sure you have a working python and pip installer running on your system.
 ### Running on your own system
 1. Open a new terminal window where the server code is located (ex. "/FutureHAUS-AI-Smart-Home-System/server")
    a. this can be done using the command in terminal cd YOUR_FOLDER_LOCATION_PATH + /server (ex. "/FutureHAUS-AI-Smart-Home-System/server")
+
    b. to verify you are in the right directory you type the command ls. If you see the file names
    ```
    ├── Server
@@ -16,8 +17,8 @@ Make sure you have a working python and pip installer running on your system.
    │   └── requirements.txt
    └── README.md  
    ```
-2. Run "pip install -r requirements.txt" to install all needed libraries
-3. Once you got all the libraries needed if you run the code using either python server.py or py server.py
+3. Run "pip install -r requirements.txt" to install all needed libraries
+4. Once you got all the libraries needed if you run the code using either python server.py or py server.py
 
 ### On The Raspberry PI 
 1. Open a new terminal on the raspberry pi
