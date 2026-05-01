@@ -8,6 +8,7 @@ When you run the server code, make sure you are on the same network as the micro
 Make sure you have a working python and pip installer running on your system.
 ### Running on your own system
 1. Open a new terminal window where the server code is located (ex. "/FutureHAUS-AI-Smart-Home-System/server")
+   
    a. this can be done using the command in terminal cd YOUR_FOLDER_LOCATION_PATH + /server (ex. "/FutureHAUS-AI-Smart-Home-System/server")
 
    b. to verify you are in the right directory you type the command ls. If you see the file names
