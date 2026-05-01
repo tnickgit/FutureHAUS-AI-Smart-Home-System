@@ -14,12 +14,21 @@ Make sure you have a working python and pip installer running on your system.
    b. to verify you are in the right directory you type the command ls. If you see the file names
    ```
    ├── Server
+   ├── requirements.txt
    │   ├── server.py
    │   └── requirements.txt
    └── README.md  
    ```
 3. Run "pip install -r requirements.txt" to install all needed libraries
-4. Once you got all the libraries needed if you run the code using either python server.py or py server.py
+4. type cd server. This will put you in the server folder
+     ```
+   ├── Server
+   │   ├── __init__.py
+   │   ├── server.py
+   ├── requirements.txt
+   └── README.md  
+   ```
+6. Once you got all the libraries needed if you run the code using either python server.py or py server.py
 
 ### On The Raspberry PI 
 1. Open a new terminal on the raspberry pi
