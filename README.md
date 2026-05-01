@@ -1,4 +1,4 @@
-# _FutureHAUSAI: Smart Home System_
+# _FutureHAUS AI: Smart Home System_
 
 This is the future haus smart home system project. This repository contains code from the main central server, an AI model with both the learning module and the voice recognition model, and code to flash to esp32 boards.
 
