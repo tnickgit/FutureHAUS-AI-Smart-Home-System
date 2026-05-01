@@ -1,32 +1,49 @@
-# _Sample project_
+# _FutureHAUSAI: Smart Home System_
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
-
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+This is the future haus smart home system project. This repository contains code from the main central server, an AI model with both the learning module and the voice recognition model, and code to flash to esp32 boards.
 
 
+## How to run the server
+When you run the server code, make sure you are on the same network as the microcontroller boards
+Make sure you have a working python and pip installer running on your system.
+### Running on your own system
+1. Open a new terminal window where the server code is located (ex. "/FutureHAUS-AI-Smart-Home-System/server")
+   a. this can be done using the command in terminal cd YOUR_FOLDER_LOCATION_PATH + /server (ex. "/FutureHAUS-AI-Smart-Home-System/server")
+   b. to verify you are in the right directory you type the command ls. If you see the file names
+   ```
+   ├── Server
+   │   ├── server.py
+   │   └── requirements.txt
+   └── README.md  
+   ```
+2. Run "pip install -r requirements.txt" to install all needed libraries
+3. Once you got all the libraries needed if you run the code using either python server.py or py server.py
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
+### On the raspberry PI 
+1. Open a new terminal on the raspberry pi
+2. type cd futureHAUS/server. This takes you to the source directory where the server code is located 
+3. type source venv/source/activate. This activates a virtual enviroment allowing the server to run
+4. type python server.py. This starts running the server
+5. if any case you want to stop the server to debug or something wrong is happening use ctrl+c. It may take moments for the server code and you will see a lot of messages after the server ccloses, but don't worry that is normal. Unlsess you see major errors. The code is just saying you interrupted the current functions it was doing.
 
-## Example folder contents
+### Running the AI language model
+1. to run this model you need to have a microphone connected to your device/raspberry pi
+2. type cd futureHAUS/server. This takes you to the source directory where las.py is located 
+3. type source venv/source/activate. This activates a virtual enviroment allowing the las.py source could to run
+4. type python las.py. This starts up running las.py
+5. if you want to cancel las.py run ctrl+c to cancel the function
 
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
+## Before flashing esp32 boards
+Before you flash any of your esp 32 boards make sure you have a working visual studio code opened up to run ESP-IDF-SDK or ESP-IDF. This extension will help run the esp 32 libraries and other functions inside the repository. Once you download the extension follow the steps to ensure you have the correct build and .vscode folder
+1. In the top bar in vs code type in run esp-IDF: add vscode configureation folder
+2. make sure your paths are correct for: preference open user settings (JSON)
+3. then run build
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+## How to flash the esp32 microcontroller boards with the correct critical system
+1. 
+   
+## How to run the display
+1. To run the display, open the IpadDisplay.html file in an ipad code editor (either koder or texttastic)
+2. If you are on the Koder app open the file and press the eye icon to start running the code. Two ICONs should appear along with the title FutureHAUS smart home system
+3. If you run the code on the textastic app there should be a play button where you can run the code.
+4. On your screen you have two buttons one for live display where it will connect to the server.py and get data from the server or simulation mode where it runs simulatiosn.
