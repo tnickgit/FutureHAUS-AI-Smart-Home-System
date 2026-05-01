@@ -40,7 +40,12 @@ Before you flash any of your esp 32 boards make sure you have a working visual s
 3. then run build
 
 ## How to flash the esp32 microcontroller boards with the correct critical system
-1. 
+1. Plug in esp32 boards to computer
+2. In the bottom of VS code select the port number that the esp 32 board is connected to (ex. COM5)
+3. When selecting a flash method make sure that it is set to UART.
+4. Once everything is connected and there is no errors you are ready to build and flash to esp32 boards
+5. In line 30 of the main/src/main.c code you will see a line that says #define NODE_TYPE   SENSOR_TYPE_POWER //change to whatever needed. You just change the word after type to either POWER, WATER, LIGHT, MOTION, or HVAC. This is based off whatever sensor the esp32 sensor is connected to.
+6. Once set, press build and flash to build the code and flash the esp32 with the critical system model.
    
 ## How to run the display
 1. To run the display, open the IpadDisplay.html file in an ipad code editor (either koder or texttastic)
