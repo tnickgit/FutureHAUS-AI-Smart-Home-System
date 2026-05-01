@@ -19,7 +19,7 @@ Make sure you have a working python and pip installer running on your system.
 2. Run "pip install -r requirements.txt" to install all needed libraries
 3. Once you got all the libraries needed if you run the code using either python server.py or py server.py
 
-### On the raspberry PI 
+### On The Raspberry PI 
 1. Open a new terminal on the raspberry pi
 2. type cd futureHAUS/server. This takes you to the source directory where the server code is located 
 3. type source venv/source/activate. This activates a virtual enviroment allowing the server to run
