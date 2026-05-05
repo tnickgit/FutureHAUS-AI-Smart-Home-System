@@ -2,6 +2,14 @@
 
 This is the future haus smart home system project. This repository contains code from the main central server, an AI model with both the learning module and the voice recognition model, and code to flash to esp32 boards.
 
+## How to connect to the router
+1. Wifi: FutureHAUS
+2. Password: teams26-06
+### if you want to change any of the routers systems
+1. On your computer connect to hte FutureHAUS network
+2. On your browser type in your search command 192.168.1.1. you should see the linksys page. Do not download the app just hit "continue to Linksys smart wifi
+3. the password is Pas$word123!
+4. Now if you see the dashboard with everything you can change any systems for the router 
 
 ## How to run the server
 When you run the server code, make sure you are on the same network as the microcontroller boards
